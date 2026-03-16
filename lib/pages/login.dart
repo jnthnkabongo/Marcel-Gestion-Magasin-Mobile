@@ -69,7 +69,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         const SizedBox(width: 12),
                         const Text(
-                          'Marcel',
+                          'Application vente',
                           style: TextStyle(
                             color: Color(0xFF764BA2),
                             fontSize: 28,
@@ -148,7 +148,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 12),
 
                     // Formulaire
                     if (isLogin) _buildLoginForm() else _buildRegisterForm(),
