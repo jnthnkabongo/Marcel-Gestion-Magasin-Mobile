@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static String get baseUrl {
@@ -12,8 +12,8 @@ class ApiService {
     }
   }
 
-  static const String tokenKey = 'auth_token';
-  static const String userKey = 'user';
+  static const String _tokenKey = 'auth_token';
+  static const String _userKey = 'user';
 
   static Future<Map<String, dynamic>> login(
     String email,
@@ -32,7 +32,7 @@ class ApiService {
           'success': true,
           'token': data['token'],
           'user': data['user'],
-          'roleId': data['roleId'],
+          'roleId': data['user']['role_id'],
           'message': data['message'],
         };
       } else {
@@ -43,7 +43,10 @@ class ApiService {
         };
       }
     } catch (e) {
-      return {'success': false, 'message': 'Erreur de réseau : ${e.toString()}'};
+      return {
+        'success': false,
+        'message': 'Erreur de réseau : ${e.toString()}',
+      };
     }
   }
 
@@ -65,7 +68,7 @@ class ApiService {
           'success': true,
           'token': data['token'],
           'user': data['user'],
-          'roleId': data['roleId'],
+          'roleId': data['user']['role_id'],
           'message': data['message'],
         };
       } else {
@@ -76,7 +79,38 @@ class ApiService {
         };
       }
     } catch (e) {
-      return {'success': false, 'message': 'Erreur de réseau : ${e.toString()}'};
+      return {
+        'success': false,
+        'message': 'Erreur de réseau : ${e.toString()}',
+      };
     }
+  }
+
+  //Recuperer le token
+  static Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_tokenKey);
+  }
+
+  // Sauvegarder le token 
+  static Future<void> saveToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_tokenKey, token);
+  }
+
+  //Sauvegarder les infos de l'utilisateur
+  static Future<void> saveUserInfo(Map<String, dynamic> user) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userKey, jsonEncode(user));
+  }
+
+  //Recuperer les infos de l'utilisateur
+  static Future<Map<String, dynamic>?> getUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userString = prefs.getString(_userKey);
+    if (userString != null) {
+      return jsonDecode(userString);
+    }
+    return null;
   }
 }
