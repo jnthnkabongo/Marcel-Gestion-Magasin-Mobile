@@ -110,14 +110,14 @@ class _MainPageAdminState extends State<MainPageAdmin> {
         children: [
           Icon(
             isSelected ? selectedIcon : icon,
-            color: isSelected ? Color(0xFF7C3AED) : Colors.grey,
+            color: isSelected ? Color(0xFF3B82F6) : Colors.grey,
             size: 24,
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
-              color: isSelected ? Color(0xFF7C3AED) : Colors.grey,
+              color: isSelected ? Color(0xFF3B82F6) : Colors.grey,
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
             ),
@@ -128,7 +128,7 @@ class _MainPageAdminState extends State<MainPageAdmin> {
               height: 2,
               width: 20,
               decoration: BoxDecoration(
-                color: const Color(0xFF7C3AED),
+                color: const Color(0xFF3B82F6),
                 // borderRadius: BorderRadius.circular(1),
               ),
             ),

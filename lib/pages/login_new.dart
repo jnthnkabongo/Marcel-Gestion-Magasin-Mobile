@@ -148,7 +148,7 @@ class _LoginPageState extends State<LoginPage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+            colors: [Color(0xFF3B82F6), Color(0xFF1E40AF)],
           ),
         ),
         child: SafeArea(
@@ -186,7 +186,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             child: const Icon(
                               Icons.store,
-                              color: Color(0xFF764BA2),
+                              color: Color(0xFF3B82F6),
                               size: 24,
                             ),
                           ),
@@ -194,7 +194,7 @@ class _LoginPageState extends State<LoginPage> {
                           const Text(
                             'Application vente',
                             style: TextStyle(
-                              color: Color(0xFF764BA2),
+                              color: Color(0xFF3B82F6),
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
                             ),
@@ -313,7 +313,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF7C3AED), width: 2),
+              borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2),
             ),
             filled: true,
             fillColor: Colors.white,
@@ -348,7 +348,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF7C3AED), width: 2),
+              borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2),
             ),
             filled: true,
             fillColor: Colors.white,
@@ -363,7 +363,7 @@ class _LoginPageState extends State<LoginPage> {
             Checkbox(
               value: _rememberMe,
               onChanged: (value) => setState(() => _rememberMe = value!),
-              activeColor: const Color(0xFF7C3AED),
+              activeColor: const Color(0xFF3B82F6),
             ),
             const Text(
               'Se souvenir',
@@ -377,7 +377,7 @@ class _LoginPageState extends State<LoginPage> {
               child: const Text(
                 'Mot de passe oublié?',
                 style: TextStyle(
-                  color: Color(0xFF7C3AED),
+                  color: Color(0xFF3B82F6),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -394,7 +394,7 @@ class _LoginPageState extends State<LoginPage> {
           child: ElevatedButton(
             onPressed: _isLoading ? null : _login,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF7C3AED),
+              backgroundColor: const Color(0xFF3B82F6),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -440,7 +440,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF7C3AED), width: 2),
+              borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2),
             ),
             filled: true,
             fillColor: Colors.white,
@@ -470,7 +470,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF7C3AED), width: 2),
+              borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2),
             ),
             filled: true,
             fillColor: Colors.white,
@@ -508,7 +508,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF7C3AED), width: 2),
+              borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2),
             ),
             filled: true,
             fillColor: Colors.white,
@@ -549,7 +549,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF7C3AED), width: 2),
+              borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2),
             ),
             filled: true,
             fillColor: Colors.white,
@@ -565,7 +565,7 @@ class _LoginPageState extends State<LoginPage> {
           child: ElevatedButton(
             onPressed: _isLoading ? null : _register,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF7C3AED),
+              backgroundColor: const Color(0xFF3B82F6),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),

@@ -27,7 +27,28 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Dashboard")),
+      appBar: AppBar(
+        title: Text(
+          "Dashboard",
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF3B82F6), Color(0xFF1E40AF)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+          ),
+        ),
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -62,12 +83,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF7C3AED), Color(0xFF764BA2)],
+          colors: [Color(0xFF3B82F6), Color(0xFF1E40AF)],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF7C3AED).withOpacity(0.3),
+            color: const Color(0xFF3B82F6).withOpacity(0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),

@@ -37,6 +37,7 @@ dependencies:
   http: ^1.5.0
   shared_preferences: ^2.5.3
   file_picker: ^10.3.3
+  mobile_scanner: ^5.2.3
 
   # Font Awesome icons
   font_awesome_flutter: ^10.0.0
