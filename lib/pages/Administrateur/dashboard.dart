@@ -10,6 +10,14 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   Map<String, dynamic>? _userData;
+  bool _isLoading = true;
+
+  // Statistiques réelles
+  int _totalUsers = 0;
+  int _totalProducts = 0;
+  int _totalSales = 0;
+  double _totalRevenue = 0;
+  bool _statsLoading = true;
 
   @override
   void initState() {
@@ -21,7 +29,60 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final userData = await ApiService.getUserData();
     setState(() {
       _userData = userData;
+      _isLoading = false;
     });
+    _loadStats();
+  }
+
+  Future _loadStats() async {
+    try {
+      // Charger les utilisateurs
+      final usersResponse = await ApiService.getUtilisateurs();
+      if (usersResponse['success'] == true) {
+        final users = usersResponse['utilisateurs'] as List?;
+        _totalUsers = users?.length ?? 0;
+      }
+
+      // Charger les produits
+      final productsResponse = await ApiService.getProduits();
+      if (productsResponse['success'] == true) {
+        final products = productsResponse['produits'] as List?;
+        _totalProducts = products?.length ?? 0;
+
+        // Calculer les ventes et revenus
+        _totalSales = 0;
+        _totalRevenue = 0;
+
+        if (products != null) {
+          for (var product in products) {
+            final produitUnites = product['produit_unites'] as List?;
+            if (produitUnites != null) {
+              final soldUnits = produitUnites
+                  .where((unite) => unite['statut'] == 'vendu')
+                  .length;
+              _totalSales += soldUnits;
+
+              final prixVente = product['prix_vente'];
+              double prixVenteDouble = 0;
+
+              if (prixVente is num) {
+                prixVenteDouble = prixVente.toDouble();
+              } else if (prixVente is String) {
+                prixVenteDouble = double.tryParse(prixVente) ?? 0;
+              }
+
+              _totalRevenue += prixVenteDouble * soldUnits;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Erreur lors du chargement des statistiques: $e');
+    } finally {
+      setState(() {
+        _statsLoading = false;
+      });
+    }
   }
 
   @override
@@ -49,30 +110,36 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ),
         ),
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFF5F5F5), Color(0xFFE8EAF6), Color(0xFFE8EAF6)],
-          ),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildWelcomeSection(),
-              const SizedBox(height: 24),
-              //_buildMainStats(),
-              const SizedBox(height: 24),
-              _buildAdminActions(context),
-              const SizedBox(height: 24),
-              _buildDetailedStats(),
-            ],
-          ),
-        ),
-      ),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+            )
+          : Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFF5F5F5),
+                    Color(0xFFE8EAF6),
+                    Color(0xFFE8EAF6),
+                  ],
+                ),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildWelcomeSection(),
+                    const SizedBox(height: 24),
+                    _buildAdminActions(context),
+                    const SizedBox(height: 24),
+                    _buildDetailedStats(),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 
@@ -117,7 +184,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Bienvenu(e) ${_userData!['name'] ?? ''}',
+                      'Bienvenu(e) ${_userData?['name'] ?? 'Administrateur'}',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -199,69 +266,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       ],
     );
   }
-
-  // Widget _buildMainStats() {
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       const Text(
-  //         'Aperçu rapide',
-  //         style: TextStyle(
-  //           fontSize: 20,
-  //           fontWeight: FontWeight.bold,
-  //           color: Color(0xFF1F2937),
-  //         ),
-  //       ),
-  //       const SizedBox(height: 16),
-  //       GridView.count(
-  //         shrinkWrap: true,
-  //         physics: const NeverScrollableScrollPhysics(),
-  //         crossAxisCount: 2,
-  //         mainAxisSpacing: 16,
-  //         crossAxisSpacing: 16,
-  //         childAspectRatio: 1.4,
-  //         children: [
-  //           _buildStatCard(
-  //             'Utilisateurs',
-  //             '45',
-  //             '12 cette semaine',
-  //             const Color(0xFFDC2626),
-  //             Icons.people,
-  //             Icons.trending_up,
-  //             '+15%',
-  //           ),
-  //           _buildStatCard(
-  //             'Produits',
-  //             '128',
-  //             '8 nouveaux',
-  //             const Color(0xFF059669),
-  //             Icons.inventory,
-  //             Icons.trending_up,
-  //             '+6.7%',
-  //           ),
-  //           _buildStatCard(
-  //             'Ventes',
-  //             '1,247',
-  //             '234 aujourd\'hui',
-  //             const Color(0xFF7C3AED),
-  //             Icons.shopping_cart,
-  //             Icons.trending_up,
-  //             '+12%',
-  //           ),
-  //           _buildStatCard(
-  //             'Revenus',
-  //             '2.5M FCFA',
-  //             '125K aujourd\'hui',
-  //             const Color(0xFF6B7280),
-  //             Icons.attach_money,
-  //             Icons.trending_up,
-  //             '+8%',
-  //           ),
-  //         ],
-  //       ),
-  //     ],
-  //   );
-  // }
 
   Widget _buildStatCard(
     String title,
@@ -384,6 +388,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               'Gestion utilisateurs',
               const Color(0xFFDC2626),
               'Gérer les comptes',
+              _totalUsers.toString(),
               () {
                 // TODO: Naviguer vers la gestion des utilisateurs
               },
@@ -394,6 +399,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               'Gestion produits',
               const Color(0xFF059669),
               'Catalogue produits',
+              _totalProducts.toString(),
               () {
                 // TODO: Naviguer vers la gestion des produits
               },
@@ -404,16 +410,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
               'Gestion catégories',
               const Color(0xFF7C3AED),
               'Organiser les catégories',
+              '0',
               () {
                 // TODO: Naviguer vers la gestion des catégories
               },
             ),
             _buildActionCard(
               context,
-              Icons.settings,
-              'Paramètres',
+              Icons.sell_outlined,
+              'Ventes',
               const Color(0xFF6B7280),
               'Configuration',
+              '$_totalSales',
               () {
                 // TODO: Naviguer vers les paramètres
               },
@@ -430,6 +438,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     String title,
     Color color,
     String description,
+    String value,
     VoidCallback onTap,
   ) {
     return GestureDetector(
@@ -471,7 +480,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 child: Icon(icon, color: Colors.white, size: 32),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Text(
                 title,
                 style: TextStyle(
@@ -482,6 +491,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 4),
+              Text(
+                _statsLoading ? '...' : value,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 2),
               Text(
                 description,
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
@@ -556,82 +575,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'Activités récentes',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1F2937),
-            ),
-          ),
-          const SizedBox(height: 12),
-          _buildActivityItem(
-            'Nouvel utilisateur inscrit',
-            'Il y a 5 minutes',
-            Icons.person_add,
-            Colors.green,
-          ),
-          _buildActivityItem(
-            'Produit mis à jour',
-            'Il y a 1 heure',
-            Icons.inventory,
-            Colors.blue,
-          ),
-          _buildActivityItem(
-            'Vente enregistrée',
-            'Il y a 2 heures',
-            Icons.shopping_cart,
-            Colors.purple,
-          ),
-          _buildActivityItem(
-            'Système mis à jour',
-            'Il y a 3 heures',
-            Icons.system_update,
-            Colors.orange,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActivityItem(
-    String title,
-    String time,
-    IconData icon,
-    Color color,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-                Text(
-                  time,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );

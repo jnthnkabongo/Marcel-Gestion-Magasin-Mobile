@@ -54,6 +54,7 @@ class _ProduitPageState extends State<ProduitPage>
 
     try {
       final response = await ApiService.getProduits();
+
       if (response['success'] == true && response['produits'] != null) {
         List<Map<String, dynamic>> allProducts =
             List<Map<String, dynamic>>.from(response['produits']);
@@ -86,13 +87,21 @@ class _ProduitPageState extends State<ProduitPage>
     _totalVentes = 0;
 
     for (var product in _produitsVendus) {
-      final prixVente = product['prix_vente'] as num?;
+      final prixVente = product['prix_vente'];
+      double prixVenteDouble = 0;
+
+      if (prixVente is num) {
+        prixVenteDouble = prixVente.toDouble();
+      } else if (prixVente is String) {
+        prixVenteDouble = double.tryParse(prixVente) ?? 0;
+      }
+
       final vendusCount =
           (product['produit_unites'] as List?)
               ?.where((unite) => unite['statut'] == 'vendu')
               .length ??
           0;
-      _totalVentes += (prixVente?.toDouble() ?? 0) * vendusCount;
+      _totalVentes += prixVenteDouble * vendusCount;
     }
   }
 
@@ -113,6 +122,20 @@ class _ProduitPageState extends State<ProduitPage>
         }).toList();
       }
     });
+  }
+
+  double _calculateTotalForProduct(Map<String, dynamic> produit) {
+    final prixVente = produit['prix_vente'];
+    double prixVenteDouble = 0;
+
+    if (prixVente is num) {
+      prixVenteDouble = prixVente.toDouble();
+    } else if (prixVente is String) {
+      prixVenteDouble = double.tryParse(prixVente) ?? 0;
+    }
+
+    final vendusCount = int.parse(_getSoldCount(produit['produit_unites']));
+    return prixVenteDouble * vendusCount;
   }
 
   String _formatDate(dynamic createdAt) {
@@ -658,7 +681,7 @@ class _ProduitPageState extends State<ProduitPage>
                     const SizedBox(height: 8),
                     _buildDetailRow(
                       'Total des ventes',
-                      '${(produit['prix_vente'] as num? ?? 0) * int.parse(_getSoldCount(produit['produit_unites']))} FC',
+                      '${_calculateTotalForProduct(produit)} FC',
                       Icons.monetization_on,
                       isTotal: true,
                     ),
