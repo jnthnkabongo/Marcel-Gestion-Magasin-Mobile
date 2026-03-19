@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:marcelgestion/pages/Administrateur/dashboard.dart';
 import 'package:marcelgestion/pages/Administrateur/parametres.dart';
-import 'package:marcelgestion/pages/Administrateur/produit.dart';
-import 'package:marcelgestion/pages/Administrateur/rapport.dart';
-import 'package:marcelgestion/pages/Administrateur/vente_marcel.dart';
+import 'package:marcelgestion/pages/Administrateur/produit_page.dart';
+import 'package:marcelgestion/pages/Administrateur/rapport_page.dart';
+import 'package:marcelgestion/pages/Administrateur/vente_page.dart';
 
 class MainPageAdmin extends StatefulWidget {
   const MainPageAdmin({super.key});

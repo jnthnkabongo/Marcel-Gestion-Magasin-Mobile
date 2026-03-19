@@ -166,4 +166,55 @@ class ApiService {
       };
     }
   }
+
+  static Future<Map<String, dynamic>> getHistoriques() async {
+    try {
+      final token = await getToken();
+      if (token == null) {
+        return {'success': false, 'message': 'Token non trouvé'};
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/liste-historiques'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'historiques': data};
+      } else {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message':
+              data['message'] ?? 'Erreur lors de la récupération des historiques',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Erreur de réseau : ${e.toString()}',
+      };
+    }
+  }
+
+  static Future<bool> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = await getToken();
+    print('Token: $token');
+
+    if (token == null) return false;
+    final response = await http.post(
+      Uri.parse('$baseUrl/logout'),
+      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+    );
+
+    await prefs.remove(_tokenKey);
+    await prefs.remove(_userKey);
+    return response.statusCode == 200;
+  }
 }

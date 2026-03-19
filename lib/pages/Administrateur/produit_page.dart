@@ -518,7 +518,7 @@ class _ProduitPageState extends State<ProduitPage>
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF7C3AED),
+              backgroundColor: const Color(0xFF3B82F6),
               foregroundColor: Colors.white,
               minimumSize: const Size(100, 40),
               textStyle: const TextStyle(fontSize: 16),
@@ -553,7 +553,7 @@ class _ProduitPageState extends State<ProduitPage>
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF7C3AED), Color(0xFF764BA2)],
+                    colors: [Color(0xFF3B82F6), Color(0xFF1E40AF)],
                   ),
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -654,7 +654,7 @@ class _ProduitPageState extends State<ProduitPage>
                       Icons.attach_money,
                     ),
                     const SizedBox(height: 8),
-                    const Divider(color: Color(0xFF7C3AED)),
+                    const Divider(color: Color(0xFF3B82F6)),
                     const SizedBox(height: 8),
                     _buildDetailRow(
                       'Total des ventes',
@@ -674,7 +674,7 @@ class _ProduitPageState extends State<ProduitPage>
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    side: const BorderSide(color: Color(0xFF7C3AED)),
+                    side: const BorderSide(color: Color(0xFF3B82F6)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -682,7 +682,7 @@ class _ProduitPageState extends State<ProduitPage>
                   child: const Text(
                     'Fermer',
                     style: TextStyle(
-                      color: Color(0xFF7C3AED),
+                      color: Color(0xFF3B82F6),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -709,13 +709,13 @@ class _ProduitPageState extends State<ProduitPage>
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: isTotal
-                  ? const Color(0xFF7C3AED).withOpacity(0.1)
+                  ? const Color(0xFF3B82F6).withOpacity(0.1)
                   : Colors.grey.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               icon,
-              color: isTotal ? const Color(0xFF7C3AED) : Colors.grey[600],
+              color: isTotal ? const Color(0xFF3B82F6) : Colors.grey[600],
               size: 16,
             ),
           ),
@@ -724,7 +724,7 @@ class _ProduitPageState extends State<ProduitPage>
             label,
             style: TextStyle(
               fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
-              color: isTotal ? const Color(0xFF7C3AED) : Colors.grey[700],
+              color: isTotal ? const Color(0xFF3B82F6) : Colors.grey[700],
               fontSize: isTotal ? 16 : 14,
             ),
           ),
@@ -733,7 +733,7 @@ class _ProduitPageState extends State<ProduitPage>
             value,
             style: TextStyle(
               fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
-              color: isTotal ? const Color(0xFF7C3AED) : Colors.black87,
+              color: isTotal ? const Color(0xFF3B82F6) : Colors.black87,
               fontSize: isTotal ? 16 : 14,
             ),
           ),
