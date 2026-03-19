@@ -148,9 +148,9 @@ class ApiService {
         },
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
-        return {'success': true, 'produits': data};
+        return {'success': true, 'produits': data['produits']};
       } else {
         final data = jsonDecode(response.body);
         return {
@@ -183,15 +183,87 @@ class ApiService {
         },
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
-        return {'success': true, 'historiques': data};
+        return {'success': true, 'historiques': data['historiques']};
       } else {
         final data = jsonDecode(response.body);
         return {
           'success': false,
           'message':
-              data['message'] ?? 'Erreur lors de la récupération des historiques',
+              data['message'] ??
+              'Erreur lors de la récupération des historiques',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Erreur de réseau : ${e.toString()}',
+      };
+    }
+  }
+
+  static Future<Map<String, dynamic>> getUtilisateurs() async {
+    try {
+      final token = await getToken();
+      if (token == null) {
+        return {'success': false, 'message': 'Token non trouvé'};
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/liste-utilisateurs'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'utilisateurs': data['utilisateurs']};
+      } else {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message':
+              data['message'] ??
+              'Erreur lors de la récupération des utilisateurs',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Erreur de réseau : ${e.toString()}',
+      };
+    }
+  }
+
+  static Future<Map<String, dynamic>> getRoles() async {
+    try {
+      final token = await getToken();
+      if (token == null) {
+        return {'success': false, 'message': 'Token non trouvé'};
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/liste-roles'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'roles': data};
+      } else {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message':
+              data['message'] ?? 'Erreur lors de la récupération des rôles',
         };
       }
     } catch (e) {
@@ -209,7 +281,7 @@ class ApiService {
 
     if (token == null) return false;
     final response = await http.post(
-      Uri.parse('$baseUrl/logout'),
+      Uri.parse('$baseUrl/api/logout'),
       headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
     );
 

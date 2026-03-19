@@ -16,10 +16,7 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
 
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _historique = [];
-  List<Map<String, dynamic>> _filteredHistorique = [];
   bool _isLoading = true;
-  String _selectedFilter = 'Tous';
-  String _selectedDateRange = 'Tout';
 
   @override
   void initState() {
@@ -56,11 +53,27 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
       final response = await ApiService.getHistoriques();
 
       if (response['success'] == true) {
+        final historiquesData = response['historiques'] as List;
         setState(() {
-          _historique = List<Map<String, dynamic>>.from(
-            response['historiques'] ?? [],
-          );
-          _filteredHistorique = _historique;
+          _historique = historiquesData.map((item) {
+            // Convertir l'objet en Map<String, dynamic> et extraire les infos utilisateur
+            final Map<String, dynamic> historiqueItem =
+                Map<String, dynamic>.from(item);
+
+            // Extraire les informations de l'utilisateur si disponible
+            if (historiqueItem.containsKey('user') &&
+                historiqueItem['user'] != null) {
+              final user = Map<String, dynamic>.from(historiqueItem['user']);
+              historiqueItem['user_name'] =
+                  user['name'] ?? 'Utilisateur inconnu';
+              historiqueItem['user_email'] = user['email'] ?? '';
+            } else {
+              historiqueItem['user_name'] = 'Utilisateur inconnu';
+              historiqueItem['user_email'] = '';
+            }
+
+            return historiqueItem;
+          }).toList();
           _isLoading = false;
         });
       } else {
@@ -85,87 +98,6 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
         ),
       );
     }
-  }
-
-  void _filterHistorique() {
-    setState(() {
-      _filteredHistorique = _historique.where((item) {
-        // Filtrage par recherche
-        final searchLower = _searchController.text.toLowerCase();
-        final action = item['action']?.toString().toLowerCase() ?? '';
-        final description = item['description']?.toString().toLowerCase() ?? '';
-        final userName = item['user_name']?.toString().toLowerCase() ?? '';
-
-        bool matchesSearch =
-            searchLower.isEmpty ||
-            action.contains(searchLower) ||
-            description.contains(searchLower) ||
-            userName.contains(searchLower);
-
-        // Filtrage par type
-        bool matchesFilter = _selectedFilter == 'Tous';
-        if (_selectedFilter != 'Tous') {
-          final type = item['type']?.toString().toUpperCase() ?? 'AUTRE';
-          switch (_selectedFilter) {
-            case 'Connexions':
-              matchesFilter = type == 'AUTH';
-              break;
-            case 'Ventes':
-              matchesFilter =
-                  action.contains('vente') || action.contains('sale');
-              break;
-            case 'Stock':
-              matchesFilter =
-                  action.contains('stock') || action.contains('inventaire');
-              break;
-            case 'Produits':
-              matchesFilter =
-                  action.contains('produit') || action.contains('product');
-              break;
-            case 'Utilisateurs':
-              matchesFilter =
-                  action.contains('utilisateur') || action.contains('user');
-              break;
-          }
-        }
-
-        // Filtrage par date
-        bool matchesDate = true;
-        if (_selectedDateRange != 'Tout') {
-          final createdAt = DateTime.tryParse(item['created_at'] ?? '');
-          if (createdAt != null) {
-            final now = DateTime.now();
-            switch (_selectedDateRange) {
-              case 'Aujourd\'hui':
-                matchesDate =
-                    createdAt.day == now.day &&
-                    createdAt.month == now.month &&
-                    createdAt.year == now.year;
-                break;
-              case 'Hier':
-                final yesterday = now.subtract(const Duration(days: 1));
-                matchesDate =
-                    createdAt.day == yesterday.day &&
-                    createdAt.month == yesterday.month &&
-                    createdAt.year == yesterday.year;
-                break;
-              case '7 jours':
-                matchesDate = createdAt.isAfter(
-                  now.subtract(const Duration(days: 7)),
-                );
-                break;
-              case '30 jours':
-                matchesDate = createdAt.isAfter(
-                  now.subtract(const Duration(days: 30)),
-                );
-                break;
-            }
-          }
-        }
-
-        return matchesSearch && matchesFilter && matchesDate;
-      }).toList();
-    });
   }
 
   @override
@@ -199,120 +131,6 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
       ),
       body: Column(
         children: [
-          // Filtres et recherche
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                // Barre de recherche
-                TextField(
-                  controller: _searchController,
-                  onChanged: (value) => _filterHistorique(),
-                  decoration: InputDecoration(
-                    hintText: 'Rechercher dans l\'historique...',
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      color: Color(0xFF3B82F6),
-                    ),
-                    border: InputBorder.none,
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.all(16),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF3B82F6)),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Filtres
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedFilter,
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedFilter = value!;
-                              });
-                              _filterHistorique();
-                            },
-                            items:
-                                const [
-                                      'Tous',
-                                      'Connexions',
-                                      'Ventes',
-                                      'Stock',
-                                      'Produits',
-                                      'Utilisateurs',
-                                    ]
-                                    .map(
-                                      (filter) => DropdownMenuItem(
-                                        value: filter,
-                                        child: Text(filter),
-                                      ),
-                                    )
-                                    .toList(),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedDateRange,
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedDateRange = value!;
-                              });
-                              _filterHistorique();
-                            },
-                            items:
-                                const [
-                                      'Tout',
-                                      'Aujourd\'hui',
-                                      'Hier',
-                                      '7 jours',
-                                      '30 jours',
-                                    ]
-                                    .map(
-                                      (range) => DropdownMenuItem(
-                                        value: range,
-                                        child: Text(range),
-                                      ),
-                                    )
-                                    .toList(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
           const SizedBox(height: 10),
 
           // Liste de l'historique
@@ -323,13 +141,13 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
                   )
                 : RefreshIndicator(
                     onRefresh: _loadHistorique,
-                    child: _filteredHistorique.isEmpty
+                    child: _historique.isEmpty
                         ? _buildEmptyState()
                         : ListView.builder(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: _filteredHistorique.length,
+                            itemCount: _historique.length,
                             itemBuilder: (context, index) {
-                              final item = _filteredHistorique[index];
+                              final item = _historique[index];
                               return AnimatedContainer(
                                 duration: Duration(
                                   milliseconds: 300 + (index * 50),
@@ -668,7 +486,7 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
               _exportSingleItem(item);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2E7D32),
+              backgroundColor: const Color(0xFF3B82F6),
               foregroundColor: Colors.white,
             ),
             child: const Text('Exporter'),
@@ -712,12 +530,12 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF2E7D32).withOpacity(0.1),
+                color: const Color(0xFF3B82F6).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
                 Icons.download,
-                color: Color(0xFF2E7D32),
+                color: Color(0xFF3B82F6),
                 size: 20,
               ),
             ),
@@ -759,7 +577,7 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
               _exportAllData();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2E7D32),
+              backgroundColor: const Color(0xFF3B82F6),
               foregroundColor: Colors.white,
             ),
             child: const Text('Exporter'),
@@ -779,7 +597,7 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF2E7D32)),
+          Icon(icon, color: const Color(0xFF3B82F6)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -789,7 +607,7 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
                   format,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF2E7D32),
+                    color: Color(0xFF3B82F6),
                   ),
                 ),
                 Text(
@@ -808,7 +626,7 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Exportation en cours...'),
-        backgroundColor: Color(0xFF2E7D32),
+        backgroundColor: Color(0xFF3B82F6),
       ),
     );
 
@@ -817,7 +635,7 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Journal exporté avec succès!'),
-          backgroundColor: Colors.green,
+          backgroundColor: Colors.blue,
         ),
       );
     });
@@ -827,7 +645,7 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Exportation de: ${item['action']}'),
-        backgroundColor: const Color(0xFF2E7D32),
+        backgroundColor: const Color(0xFF3B82F6),
       ),
     );
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 
+import 'package:marcelgestion/services/api_service.dart';
+
 class UsersPage extends StatefulWidget {
   const UsersPage({super.key});
 
@@ -27,12 +29,12 @@ class _UsersPageState extends State<UsersPage> {
     });
 
     try {
-      final response = await ApiService.getUsers();
+      final response = await ApiService.getUtilisateurs();
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      if (response['success'] == true) {
+        final data = response['utilisateurs'];
         setState(() {
-          _users = List<Map<String, dynamic>>.from(data['users'] ?? []);
+          _users = List<Map<String, dynamic>>.from(data ?? []);
           _filteredUsers = _users;
           _isLoading = false;
         });
@@ -43,7 +45,7 @@ class _UsersPageState extends State<UsersPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Erreur: ${response.statusCode}'),
+              content: Text('Erreur: ${response['message']}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -116,7 +118,7 @@ class _UsersPageState extends State<UsersPage> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF2E7D32), Color(0xFF43A047)],
+              colors: [Color(0xFF3B82F6), Color(0xFF1E40AF)],
             ),
           ),
         ),
@@ -187,7 +189,7 @@ class _UsersPageState extends State<UsersPage> {
                     child: Padding(
                       padding: EdgeInsets.all(32.0),
                       child: CircularProgressIndicator(
-                        color: Color(0xFF2E7D32),
+                        color: Color(0xFF3B82F6),
                       ),
                     ),
                   ),
@@ -211,7 +213,7 @@ class _UsersPageState extends State<UsersPage> {
                     final status = isActive ? 'Actif' : 'Inactif';
 
                     IconData icon = Icons.person;
-                    Color color = Colors.green;
+                    Color color = Colors.blue;
 
                     if (!isActive) {
                       icon = Icons.person_off;
@@ -248,7 +250,7 @@ class _UsersPageState extends State<UsersPage> {
         onPressed: () {
           _showAddUserDialog();
         },
-        backgroundColor: const Color(0xFF2E7D32),
+        backgroundColor: const Color(0xFF3B82F6),
         child: const Icon(Icons.add),
       ),
     );
@@ -334,7 +336,7 @@ class _UsersPageState extends State<UsersPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: isActive ? Colors.green : Colors.grey,
+                color: isActive ? Colors.blue : Colors.grey,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -456,12 +458,12 @@ class _UsersPageState extends State<UsersPage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF2E7D32).withOpacity(0.1),
+                color: const Color(0xFF3B82F6).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
                 Icons.person,
-                color: Color(0xFF2E7D32),
+                color: Color(0xFF3B82F6),
                 size: 20,
               ),
             ),
@@ -494,7 +496,7 @@ class _UsersPageState extends State<UsersPage> {
               // TODO: Modifier l'utilisateur
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2E7D32),
+              backgroundColor: const Color(0xFF3B82F6),
               foregroundColor: Colors.white,
             ),
             child: const Text('Modifier'),
@@ -559,10 +561,10 @@ class _UsersPageState extends State<UsersPage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF2E7D32).withOpacity(0.1),
+                color: const Color(0xFF3B82F6).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.add, color: Color(0xFF2E7D32), size: 20),
+              child: const Icon(Icons.add, color: Color(0xFF3B82F6), size: 20),
             ),
             const SizedBox(width: 12),
             const Text('Ajouter un utilisateur'),
@@ -592,7 +594,7 @@ class _UsersPageState extends State<UsersPage> {
               // TODO: Ajouter l'utilisateur
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2E7D32),
+              backgroundColor: const Color(0xFF3B82F6),
               foregroundColor: Colors.white,
             ),
             child: const Text('Ajouter'),
@@ -621,7 +623,7 @@ class _UsersPageState extends State<UsersPage> {
               // TODO: Activer l'utilisateur
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
+              backgroundColor: Colors.blue,
               foregroundColor: Colors.white,
             ),
             child: const Text('Activer'),

@@ -54,9 +54,10 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
 
     try {
       final response = await ApiService.getProduits();
-      if (response['success'] == true && response['produits'] != null) {
+
+      if (response['success'] == true && response['data'] != null) {
         List<Map<String, dynamic>> allProducts =
-            List<Map<String, dynamic>>.from(response['produits']);
+            List<Map<String, dynamic>>.from(response['data']);
 
         // Filtrer uniquement les produits non vendus (ceux qui ont des unités avec statut 'en_stock')
         _ventes = allProducts.where((product) {

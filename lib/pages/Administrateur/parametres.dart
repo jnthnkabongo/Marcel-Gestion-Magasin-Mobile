@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:marcelgestion/pages/Administrateur/historique_page.dart';
+import 'package:marcelgestion/pages/Administrateur/utilisateur_page.dart';
 import 'package:marcelgestion/pages/login_new.dart';
 import 'package:marcelgestion/services/api_service.dart';
 
@@ -157,7 +158,7 @@ class _ParametresPagePageState extends State<ParametresPage> {
                 () {
                   Navigator.of(
                     context,
-                  ).push(MaterialPageRoute(builder: (context) => LoginPage()));
+                  ).push(MaterialPageRoute(builder: (context) => UsersPage()));
                 },
               ),
               _buildModernSettingTile(
