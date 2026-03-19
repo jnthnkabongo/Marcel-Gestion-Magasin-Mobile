@@ -247,24 +247,24 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
                           Icons.monetization_on,
                           Colors.blue,
                         ),
-                        _buildAnimatedStatCard(
-                          'Disponibles',
-                          _ventes
-                              .where(
-                                (v) =>
-                                    ((v['produit_unites'] as List?)
-                                        ?.where(
-                                          (unite) =>
-                                              unite['statut'] == 'en_stock',
-                                        )
-                                        .isNotEmpty ??
-                                    false),
-                              )
-                              .length
-                              .toString(),
-                          Icons.check_circle,
-                          Colors.orange,
-                        ),
+                        // _buildAnimatedStatCard(
+                        //   'Disponibles',
+                        //   _ventes
+                        //       .where(
+                        //         (v) =>
+                        //             ((v['produit_unites'] as List?)
+                        //                 ?.where(
+                        //                   (unite) =>
+                        //                       unite['statut'] == 'en_stock',
+                        //                 )
+                        //                 .isNotEmpty ??
+                        //             false),
+                        //       )
+                        //       .length
+                        //       .toString(),
+                        //   Icons.check_circle,
+                        //   Colors.orange,
+                        // ),
                       ],
                     ),
                   ],

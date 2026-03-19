@@ -16,7 +16,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
   int _totalUsers = 0;
   int _totalProducts = 0;
   int _totalSales = 0;
-  double _totalRevenue = 0;
+  int _totalCategories = 0;
+  int _sommeProduitAutres = 0;
+  int _sommeProduitTelephones = 0;
+  int _sommeProduitOrdinateurs = 0;
   bool _statsLoading = true;
 
   @override
@@ -36,49 +39,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Future _loadStats() async {
     try {
-      // Charger les utilisateurs
-      final usersResponse = await ApiService.getUtilisateurs();
-      if (usersResponse['success'] == true) {
-        final users = usersResponse['utilisateurs'] as List?;
-        _totalUsers = users?.length ?? 0;
-      }
+      // Charger toutes les statistiques depuis l'API dashboard
+      final dashboardResponse = await ApiService.getDashboard();
+      if (dashboardResponse['success'] == true) {
+        final data = dashboardResponse['data'];
 
-      // Charger les produits
-      final productsResponse = await ApiService.getProduits();
-      if (productsResponse['success'] == true) {
-        final products = productsResponse['produits'] as List?;
-        _totalProducts = products?.length ?? 0;
-
-        // Calculer les ventes et revenus
-        _totalSales = 0;
-        _totalRevenue = 0;
-
-        if (products != null) {
-          for (var product in products) {
-            final produitUnites = product['produit_unites'] as List?;
-            if (produitUnites != null) {
-              final soldUnits = produitUnites
-                  .where((unite) => unite['statut'] == 'vendu')
-                  .length;
-              _totalSales += soldUnits;
-
-              final prixVente = product['prix_vente'];
-              double prixVenteDouble = 0;
-
-              if (prixVente is num) {
-                prixVenteDouble = prixVente.toDouble();
-              } else if (prixVente is String) {
-                prixVenteDouble = double.tryParse(prixVente) ?? 0;
-              }
-
-              _totalRevenue += prixVenteDouble * soldUnits;
-            }
-          }
-        }
+        setState(() {
+          _sommeProduitAutres = data['sommeProduitAutres'] ?? 0;
+          _sommeProduitTelephones = data['sommeProduitTelephones'] ?? 0;
+          _sommeProduitOrdinateurs = data['sommeProduitOrdinateurs'] ?? 0;
+          _totalUsers = data['sommeUtilisateur'] ?? 0;
+          _totalProducts = data['sommeProduit'] ?? 0;
+          _totalSales = data['sommeVente'] ?? 0;
+          _totalCategories = data['sommeCategorie'] ?? 0;
+          _statsLoading = false;
+        });
+      } else {
+        print('Erreur dashboard: ${dashboardResponse['message']}');
+        setState(() {
+          _statsLoading = false;
+        });
       }
     } catch (e) {
       print('Erreur lors du chargement des statistiques: $e');
-    } finally {
       setState(() {
         _statsLoading = false;
       });
@@ -217,19 +200,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
               children: [
                 _buildQuickStat(
                   'Accesoires',
-                  '12',
+                  '$_sommeProduitAutres',
                   Icons.headphones,
                   Colors.white,
                 ),
                 _buildQuickStat(
                   'Téléphone',
-                  '45',
+                  '$_sommeProduitTelephones',
                   Icons.phone_android,
                   Colors.white,
                 ),
                 _buildQuickStat(
                   'Ordinateurs',
-                  '128',
+                  '$_sommeProduitOrdinateurs',
                   Icons.desktop_mac,
                   Colors.white,
                 ),
@@ -410,7 +393,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               'Gestion catégories',
               const Color(0xFF7C3AED),
               'Organiser les catégories',
-              '0',
+              '$_totalCategories',
               () {
                 // TODO: Naviguer vers la gestion des catégories
               },

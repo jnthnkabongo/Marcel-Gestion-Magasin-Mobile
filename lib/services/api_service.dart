@@ -131,6 +131,44 @@ class ApiService {
     return null;
   }
 
+  //Recuperer les informations du dashboard
+  static Future<Map<String, dynamic>> getDashboard() async {
+    try {
+      final token = await getToken();
+      if (token == null) {
+        return {'success': false, 'message': 'Token non trouvé'};
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/dashboard'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': true,
+          'data': data,
+        };
+      } else {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Erreur lors de la récupération des données',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Erreur de réseau : ${e.toString()}',
+      };
+    }
+  }
+
   // Récupérer la liste des produits
   static Future<Map<String, dynamic>> getProduits() async {
     try {

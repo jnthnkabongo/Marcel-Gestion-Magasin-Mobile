@@ -268,25 +268,25 @@ class _ProduitPageState extends State<ProduitPage>
                         ),
                         _buildAnimatedStatCard(
                           'Total Ventes',
-                          '${_totalVentes.toStringAsFixed(0)} FC',
+                          '${_totalVentes.toStringAsFixed(0)} \$',
                           Icons.monetization_on,
                           Colors.green,
                         ),
-                        _buildAnimatedStatCard(
-                          'Unités Vendues',
-                          _produitsVendus.fold<int>(0, (sum, product) {
-                            final vendusCount =
-                                (product['produit_unites'] as List?)
-                                    ?.where(
-                                      (unite) => unite['statut'] == 'vendu',
-                                    )
-                                    .length ??
-                                0;
-                            return sum + vendusCount;
-                          }).toString(),
-                          Icons.inventory_2_outlined,
-                          Colors.orange,
-                        ),
+                        // _buildAnimatedStatCard(
+                        //   'Unités Vendues',
+                        //   _produitsVendus.fold<int>(0, (sum, product) {
+                        //     final vendusCount =
+                        //         (product['produit_unites'] as List?)
+                        //             ?.where(
+                        //               (unite) => unite['statut'] == 'vendu',
+                        //             )
+                        //             .length ??
+                        //         0;
+                        //     return sum + vendusCount;
+                        //   }).toString(),
+                        //   Icons.inventory_2_outlined,
+                        //   Colors.orange,
+                        // ),
                       ],
                     ),
                   ],
