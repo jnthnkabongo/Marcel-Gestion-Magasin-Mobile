@@ -151,33 +151,6 @@ class _ParametresPagePageState extends State<ParametresPage> {
           SliverList(
             delegate: SliverChildListDelegate([
               _buildModernSettingTile(
-                'Rôles et permissions',
-                'Configurer les accès',
-                Icons.admin_panel_settings,
-                Colors.blue,
-                () {
-                  Navigator.of(
-                    context,
-                  ).push(MaterialPageRoute(builder: (context) => UsersPage()));
-                },
-              ),
-              _buildModernSettingTile(
-                'Catégories des produits ',
-                'Configurer les catégories des produits',
-                Icons.check_box,
-                Colors.blue,
-                () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                  );
-                },
-              ),
-            ]),
-          ),
-
-          SliverList(
-            delegate: SliverChildListDelegate([
-              _buildModernSettingTile(
                 'Sauvegarde',
                 'Backup et restauration',
                 Icons.backup,
@@ -203,22 +176,6 @@ class _ParametresPagePageState extends State<ParametresPage> {
                 () {
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (context) => const AuditPage()),
-                  );
-                },
-              ),
-            ]),
-          ),
-
-          SliverList(
-            delegate: SliverChildListDelegate([
-              _buildModernSettingTile(
-                'Notification & Alertes de stock',
-                'Configurer les seuils',
-                Icons.notifications_active,
-                Colors.blue,
-                () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
                   );
                 },
               ),
