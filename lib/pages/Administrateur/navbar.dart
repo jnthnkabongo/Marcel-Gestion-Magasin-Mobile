@@ -66,15 +66,15 @@ class _MainPageAdminState extends State<MainPageAdmin> {
                   index: 1,
                 ),
                 _buildNavItem(
-                  icon: Icons.inventory_outlined,
-                  selectedIcon: Icons.inventory,
-                  label: 'Produits',
-                  index: 2,
-                ),
-                _buildNavItem(
                   icon: Icons.payment_outlined,
                   selectedIcon: Icons.payment,
                   label: 'Ventes',
+                  index: 2,
+                ),
+                _buildNavItem(
+                  icon: Icons.inventory_outlined,
+                  selectedIcon: Icons.inventory,
+                  label: 'produits',
                   index: 3,
                 ),
                 _buildNavItem(

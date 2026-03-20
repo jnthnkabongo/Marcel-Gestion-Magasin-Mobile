@@ -205,6 +205,40 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> getVentes() async {
+    try {
+      final token = await getToken();
+      if (token == null) {
+        return {'success': false, 'message': 'Token non trouvé'};
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/liste-vente'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'ventes': data['ventes']};
+      } else {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Erreur lors de la récupération des ventes',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Erreur de réseau : ${e.toString()}',
+      };
+    }
+  }
+
   static Future<Map<String, dynamic>> getHistoriques() async {
     try {
       final token = await getToken();
