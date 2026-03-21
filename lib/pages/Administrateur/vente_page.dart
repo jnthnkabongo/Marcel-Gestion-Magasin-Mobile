@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:marcelgestion/pages/Administrateur/dashboard.dart';
+import 'package:marcelgestion/pages/Administrateur/navbar.dart';
+import 'package:marcelgestion/pages/User/dashboard.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../services/api_service.dart';
 
@@ -1141,13 +1144,13 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('✅ Produit trouvé: ${product['nom']}'),
-              const SizedBox(height: 4),
-              Text('📦 $stockCount unité(s) en stock'),
-              if (serialNumbers.isNotEmpty) ...[
-                const SizedBox(height: 2),
-                Text('🏷️ N°: $serialNumbers${stockCount > 3 ? '...' : ''}'),
-              ],
+              Text('✅ Produit trouvé: ${product['nom']} - $serialNumbers'),
+              // const SizedBox(height: 4),
+              // Text('📦 $stockCount unité(s) en stock'),
+              // if (serialNumbers.isNotEmpty) ...[
+              //   const SizedBox(height: 2),
+              //   Text('🏷️ N°: $serialNumbers${stockCount > 3 ? '...' : ''}'),
+              // ],
             ],
           ),
           backgroundColor: Colors.green,
@@ -1410,7 +1413,7 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2E7D32),
+              backgroundColor: const Color(0xFF3B82F6),
               foregroundColor: Colors.white,
               minimumSize: const Size(100, 40),
               textStyle: const TextStyle(fontSize: 16),
@@ -1459,7 +1462,7 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2E7D32),
+              backgroundColor: const Color(0xFF3B82F6),
               foregroundColor: Colors.white,
             ),
             child: const Text('Appliquer'),
@@ -1528,7 +1531,7 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
                           const Text(
                             'Détails du produit',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
@@ -1598,8 +1601,8 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
                       Icons.inventory_2,
                     ),
                     _buildDetailRow(
-                      'Prix unitaire',
-                      '${vente['prix_vente'] ?? 0} FC',
+                      'Prix de vente',
+                      '${vente['prix_vente'] ?? 0} \$',
                       Icons.attach_money,
                     ),
                     if (stockCount > 0) ...[
@@ -1608,7 +1611,7 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
                       const SizedBox(height: 8),
                       _buildDetailRow(
                         'Valeur totale',
-                        '${(double.tryParse(vente['prix_vente']?.toString() ?? '0') ?? 0) * stockCount} FC',
+                        '${(double.tryParse(vente['prix_vente']?.toString() ?? '0') ?? 0) * stockCount} \$',
                         Icons.monetization_on,
                         isTotal: true,
                       ),
@@ -1733,32 +1736,41 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: isTotal
-                  ? const Color(0xFF2E7D32).withOpacity(0.1)
+                  ? const Color(0xFF3B82F6).withOpacity(0.1)
                   : Colors.grey.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               icon,
-              color: isTotal ? const Color(0xFF2E7D32) : Colors.grey[600],
-              size: 16,
+              color: isTotal ? const Color(0xFF3B82F6) : Colors.grey[600],
+              size: 14,
             ),
           ),
           const SizedBox(width: 12),
-          Text(
-            label,
-            style: TextStyle(
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
-              color: isTotal ? const Color(0xFF2E7D32) : Colors.grey[700],
-              fontSize: isTotal ? 16 : 14,
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+                color: isTotal ? const Color(0xFF3B82F6) : Colors.grey[700],
+                fontSize: isTotal ? 14 : 12,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const Spacer(),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
-              color: isTotal ? const Color(0xFF2E7D32) : Colors.black87,
-              fontSize: isTotal ? 16 : 14,
+          Expanded(
+            flex: 1,
+            child: Text(
+              value,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
+                color: isTotal ? const Color(0xFF3B82F6) : Colors.black87,
+                fontSize: isTotal ? 14 : 12,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -1966,10 +1978,12 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
 
                         // Prix unitaire
                         TextField(
+                          controller: TextEditingController(
+                            text: '${produit['prix_vente'] ?? 0} \$',
+                          ),
                           enabled: false,
                           decoration: InputDecoration(
                             labelText: 'Prix unitaire',
-                            hintText: '${produit['prix_vente'] ?? 0} FC',
                             prefixIcon: const Icon(Icons.attach_money),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -1999,7 +2013,7 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
                                 ),
                               ),
                               Text(
-                                '${total.toStringAsFixed(0)} FC',
+                                '${total.toStringAsFixed(0)} \$',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 20,
@@ -2107,20 +2121,90 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
     int quantity,
     String clientName,
   ) async {
-    // TODO: Implémenter l'appel API pour enregistrer la vente
-    // Pour l'instant, nous allons juste montrer un message de succès
+    try {
+      // Afficher un indicateur de chargement
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Traitement de la vente en cours...'),
+            backgroundColor: Colors.blue,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Vente effectuée: $quantity unité(s) de ${produit['nom']} pour $clientName',
-        ),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+      // Préparer les données pour l'API
+      final venteData = {
+        'client_id': 1, // ID du client par défaut (à adapter)
+        'nom_client': clientName,
+        'date_vente': DateTime.now().toIso8601String().split(
+          'T',
+        )[0], // Format YYYY-MM-DD
+        'produits': [produit['id']],
+        'quantites': [quantity],
+        'prix_unitaires': [produit['prix_vente']],
+        'totaux': [
+          quantity *
+              (double.tryParse(produit['prix_vente']?.toString() ?? '0') ?? 0),
+        ],
+      };
 
-    // Recharger les données pour mettre à jour le stock
-    _loadVentes();
+      // Appeler l'API pour enregistrer la vente
+      final response = await ApiService.effectuerVente(venteData);
+
+      if (response['success'] == true) {
+        // Succès
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '✅ Vente effectuée avec succès!\n$quantity unité(s) de ${produit['nom']} pour $clientName',
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+
+        // Fermer le dialogue de vente
+        Navigator.pop(context);
+
+        // Rediriger vers la page des ventes avec un délai pour éviter les conflits
+        if (mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => MainPageAdmin()),
+                (route) => false,
+              );
+            }
+          });
+        }
+      } else {
+        // Erreur
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '❌ Erreur lors de la vente: ${response['message'] ?? 'Erreur inconnue'}',
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Erreur réseau ou autre
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Erreur de connexion: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
   }
 }

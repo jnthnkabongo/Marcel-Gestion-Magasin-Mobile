@@ -18,19 +18,19 @@ class ApiService {
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'user';
 
-  // Headers pour les requêtes authentifiées
-  static Map<String, String> _getHeaders({bool requireAuth = true}) {
-    Map<String, String> headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+  // // Headers pour les requêtes authentifiées
+  // static Map<String, String> _getHeaders({bool requireAuth = true}) {
+  //   Map<String, String> headers = {
+  //     'Content-Type': 'application/json',
+  //     'Accept': 'application/json',
+  //   };
 
-    if (requireAuth && _tokenKey != null) {
-      headers['Authorization'] = 'Bearer $_tokenKey';
-    }
+  //   if (requireAuth && _tokenKey != null) {
+  //     headers['Authorization'] = 'Bearer $_tokenKey';
+  //   }
 
-    return headers;
-  }
+  //   return headers;
+  // }
 
   static Future<Map<String, dynamic>> login(
     String email,
@@ -150,15 +150,13 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return {
-          'success': true,
-          'data': data,
-        };
+        return {'success': true, 'data': data};
       } else {
         final data = jsonDecode(response.body);
         return {
           'success': false,
-          'message': data['message'] ?? 'Erreur lors de la récupération des données',
+          'message':
+              data['message'] ?? 'Erreur lors de la récupération des données',
         };
       }
     } catch (e) {
@@ -228,7 +226,8 @@ class ApiService {
         final data = jsonDecode(response.body);
         return {
           'success': false,
-          'message': data['message'] ?? 'Erreur lors de la récupération des ventes',
+          'message':
+              data['message'] ?? 'Erreur lors de la récupération des ventes',
         };
       }
     } catch (e) {
@@ -336,6 +335,48 @@ class ApiService {
           'success': false,
           'message':
               data['message'] ?? 'Erreur lors de la récupération des rôles',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Erreur de réseau : ${e.toString()}',
+      };
+    }
+  }
+
+  static Future<Map<String, dynamic>> effectuerVente(
+    Map<String, dynamic> venteData,
+  ) async {
+    try {
+      final token = await getToken();
+      if (token == null) {
+        return {'success': false, 'message': 'Token non trouvé'};
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/vente-produit'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(venteData),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': true,
+          'vente': data['vente'],
+          'message': data['message'],
+        };
+      } else {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Erreur lors de la vente',
+          'errors': data['errors'] ?? null,
         };
       }
     } catch (e) {

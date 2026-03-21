@@ -53,21 +53,50 @@ class _ProduitPageState extends State<ProduitPage>
     });
 
     try {
-      final response = await ApiService.getProduits();
+      final response = await ApiService.getVentes();
 
-      if (response['success'] == true && response['produits'] != null) {
-        List<Map<String, dynamic>> allProducts =
-            List<Map<String, dynamic>>.from(response['produits']);
+      if (response['success'] == true && response['ventes'] != null) {
+        List<Map<String, dynamic>> allVentes = List<Map<String, dynamic>>.from(
+          response['ventes'],
+        );
 
-        // Filtrer uniquement les produits vendus (ceux qui ont des unités avec statut 'vendu')
-        _produitsVendus = allProducts.where((product) {
-          final produitUnites = product['produit_unites'] as List?;
-          if (produitUnites == null || produitUnites.isEmpty) return false;
+        // Transformer les ventes en liste de produits vendus avec informations client
+        List<Map<String, dynamic>> produitsVendus = [];
 
-          return produitUnites.any((unite) => unite['statut'] == 'vendu');
-        }).toList();
+        for (var vente in allVentes) {
+          if (vente['vente_details'] != null) {
+            for (var detail in vente['vente_details']) {
+              if (detail['produit_unite'] != null &&
+                  detail['produit_unite']['produit'] != null) {
+                var produit = detail['produit_unite']['produit'];
+                var venteInfo = {
+                  'id': produit['id'],
+                  'nom': produit['nom'],
+                  'categorie': produit['categorie'],
+                  'marque': produit['marque'],
+                  'modele': produit['modele'],
+                  'prix_vente': detail['prix_unitaire'],
+                  'prix_achat': produit['prix_achat'],
+                  'numero_serie': detail['produit_unite']['numero_serie'],
+                  'date_vente': vente['date_vente'],
+                  'reference': vente['reference'],
+                  'client_nom':
+                      vente['nom_client']?.toString().isNotEmpty == true
+                      ? vente['nom_client'].toString()
+                      : vente['client']?['nom']?.toString() ?? 'Client inconnu',
+                  'client_id': vente['client_id'],
+                  'vente_id': vente['id'],
+                  'detail_id': detail['id'],
+                  'created_at': vente['created_at'],
+                };
+                produitsVendus.add(venteInfo);
+              }
+            }
+          }
+        }
 
-        _produitsFiltres = _produitsVendus;
+        _produitsVendus = produitsVendus;
+        _produitsFiltres = produitsVendus;
         _calculateStats();
       } else {
         print(
@@ -86,8 +115,8 @@ class _ProduitPageState extends State<ProduitPage>
   void _calculateStats() {
     _totalVentes = 0;
 
-    for (var product in _produitsVendus) {
-      final prixVente = product['prix_vente'];
+    for (var produitVendu in _produitsVendus) {
+      final prixVente = produitVendu['prix_vente'];
       double prixVenteDouble = 0;
 
       if (prixVente is num) {
@@ -96,12 +125,7 @@ class _ProduitPageState extends State<ProduitPage>
         prixVenteDouble = double.tryParse(prixVente) ?? 0;
       }
 
-      final vendusCount =
-          (product['produit_unites'] as List?)
-              ?.where((unite) => unite['statut'] == 'vendu')
-              .length ??
-          0;
-      _totalVentes += prixVenteDouble * vendusCount;
+      _totalVentes += prixVenteDouble;
     }
   }
 
@@ -115,10 +139,14 @@ class _ProduitPageState extends State<ProduitPage>
           final nom = v['nom']?.toString().toLowerCase() ?? '';
           final id = v['id']?.toString().toLowerCase() ?? '';
           final marque = v['marque']?['nom']?.toString().toLowerCase() ?? '';
+          final clientNom = v['client_nom']?.toString().toLowerCase() ?? '';
+          final reference = v['reference']?.toString().toLowerCase() ?? '';
 
           return nom.contains(lowerQuery) ||
               id.contains(lowerQuery) ||
-              marque.contains(lowerQuery);
+              marque.contains(lowerQuery) ||
+              clientNom.contains(lowerQuery) ||
+              reference.contains(lowerQuery);
         }).toList();
       }
     });
@@ -134,8 +162,7 @@ class _ProduitPageState extends State<ProduitPage>
       prixVenteDouble = double.tryParse(prixVente) ?? 0;
     }
 
-    final vendusCount = int.parse(_getSoldCount(produit['produit_unites']));
-    return prixVenteDouble * vendusCount;
+    return prixVenteDouble;
   }
 
   String _formatDate(dynamic createdAt) {
@@ -148,10 +175,17 @@ class _ProduitPageState extends State<ProduitPage>
       if (parts.length == 3) {
         return '${parts[2]}/${parts[1]}/${parts[0]}'; // DD/MM/YYYY
       }
-      return dateStr.split(' ')[0]; // Fallback to first part
     } catch (e) {
-      return 'N/A';
+      // En cas d'erreur, essayer avec un autre format
+      try {
+        final date = DateTime.parse(createdAt.toString());
+        return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+      } catch (e) {
+        return createdAt.toString();
+      }
     }
+
+    return createdAt.toString();
   }
 
   String _getSoldCount(dynamic produitUnites) {
@@ -363,6 +397,27 @@ class _ProduitPageState extends State<ProduitPage>
                                     Row(
                                       children: [
                                         Icon(
+                                          Icons.person,
+                                          size: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                        const SizedBox(width: 2),
+                                        Expanded(
+                                          child: Text(
+                                            "Client: ${produitItem['client_nom'] ?? 'Client inconnu'}",
+                                            style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Row(
+                                      children: [
+                                        Icon(
                                           Icons.inventory_2,
                                           size: 14,
                                           color: Colors.grey[600],
@@ -370,10 +425,30 @@ class _ProduitPageState extends State<ProduitPage>
                                         const SizedBox(width: 2),
                                         Expanded(
                                           child: Text(
-                                            "Vendus : ${_getSoldCount(produitItem['produit_unites'])} unité(s)",
+                                            "N° Série: ${produitItem['numero_serie'] ?? 'N/A'}",
                                             style: TextStyle(
                                               color: Colors.grey[600],
-                                              fontSize: 14,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.receipt,
+                                          size: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                        const SizedBox(width: 2),
+                                        Expanded(
+                                          child: Text(
+                                            "Ref: ${produitItem['reference'] ?? 'N/A'}",
+                                            style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontSize: 12,
                                             ),
                                           ),
                                         ),
@@ -402,18 +477,16 @@ class _ProduitPageState extends State<ProduitPage>
                                     Row(
                                       children: [
                                         Icon(
-                                          Icons.tag,
+                                          Icons.calendar_today,
                                           size: 14,
                                           color: Colors.grey[600],
                                         ),
                                         const SizedBox(width: 2),
-                                        Expanded(
-                                          child: Text(
-                                            "N°: ${_getFirstSoldSerialNumber(produitItem['produit_unites'])}",
-                                            style: TextStyle(
-                                              color: Colors.grey[600],
-                                              fontSize: 12,
-                                            ),
+                                        Text(
+                                          "Vente: ${_formatDate(produitItem['date_vente'])}",
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 12,
                                           ),
                                         ),
                                       ],
@@ -667,9 +740,29 @@ class _ProduitPageState extends State<ProduitPage>
                       Icons.branding_watermark,
                     ),
                     _buildDetailRow(
-                      'Unités vendues',
-                      '${_getSoldCount(produit['produit_unites'])}',
-                      Icons.sell,
+                      'Modèle',
+                      produit['modele'] ?? 'N/A',
+                      Icons.category,
+                    ),
+                    _buildDetailRow(
+                      'Client',
+                      produit['client_nom'] ?? 'Client inconnu',
+                      Icons.person,
+                    ),
+                    _buildDetailRow(
+                      'N° Série',
+                      produit['numero_serie'] ?? 'N/A',
+                      Icons.tag,
+                    ),
+                    _buildDetailRow(
+                      'Référence vente',
+                      produit['reference'] ?? 'N/A',
+                      Icons.receipt,
+                    ),
+                    _buildDetailRow(
+                      'Date de vente',
+                      _formatDate(produit['date_vente']),
+                      Icons.calendar_today,
                     ),
                     _buildDetailRow(
                       'Prix unitaire',
@@ -680,7 +773,7 @@ class _ProduitPageState extends State<ProduitPage>
                     const Divider(color: Color(0xFF3B82F6)),
                     const SizedBox(height: 8),
                     _buildDetailRow(
-                      'Total des ventes',
+                      'Total',
                       '${_calculateTotalForProduct(produit)} FC',
                       Icons.monetization_on,
                       isTotal: true,

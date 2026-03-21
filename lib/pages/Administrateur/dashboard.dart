@@ -294,18 +294,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    color: Colors.blue.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(trendIcon, color: Colors.green, size: 14),
+                      Icon(trendIcon, color: Colors.blue, size: 14),
                       const SizedBox(width: 4),
                       Text(
                         percentage,
                         style: const TextStyle(
-                          color: Colors.green,
+                          color: Colors.blue,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -369,7 +369,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               context,
               Icons.people,
               'Gestion utilisateurs',
-              const Color(0xFFDC2626),
+              const Color(0xFF6B7280),
               'Gérer les comptes',
               _totalUsers.toString(),
               () {
@@ -391,7 +391,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               context,
               Icons.category,
               'Gestion catégories',
-              const Color(0xFF7C3AED),
+              const Color.fromARGB(255, 12, 33, 196),
               'Organiser les catégories',
               '$_totalCategories',
               () {
@@ -402,7 +402,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               context,
               Icons.sell_outlined,
               'Ventes',
-              const Color(0xFF6B7280),
+              const Color(0xFFDC2626),
               'Configuration',
               '$_totalSales',
               () {
