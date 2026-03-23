@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:marcelgestion/pages/Administrateur/dashboard.dart';
 import 'package:marcelgestion/pages/Administrateur/parametres.dart';
 import 'package:marcelgestion/pages/Administrateur/produit_page.dart';
-import 'package:marcelgestion/pages/Administrateur/rapport_page.dart';
+import 'package:marcelgestion/pages/Administrateur/rapport.dart';
 import 'package:marcelgestion/pages/Administrateur/vente_page.dart';
 
 class MainPageAdmin extends StatefulWidget {
@@ -35,52 +35,52 @@ class _MainPageAdminState extends State<MainPageAdmin> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          // borderRadius: const BorderRadius.only(
-          //   topLeft: Radius.circular(20),
-          //   topRight: Radius.circular(20),
-          // ),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(25),
+            topRight: Radius.circular(25),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
             ),
           ],
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildNavItem(
                   icon: Icons.home_outlined,
-                  selectedIcon: Icons.home,
-                  label: 'Home',
+                  selectedIcon: Icons.home_rounded,
+                  label: 'Accueil',
                   index: 0,
                 ),
                 _buildNavItem(
-                  icon: Icons.bar_chart_outlined,
-                  selectedIcon: Icons.bar_chart,
-                  label: 'Rapport',
+                  icon: Icons.analytics_outlined,
+                  selectedIcon: Icons.analytics_rounded,
+                  label: 'Rapports',
                   index: 1,
                 ),
                 _buildNavItem(
-                  icon: Icons.payment_outlined,
-                  selectedIcon: Icons.payment,
+                  icon: Icons.sell_outlined,
+                  selectedIcon: Icons.sell_rounded,
                   label: 'Ventes',
                   index: 2,
                 ),
                 _buildNavItem(
-                  icon: Icons.inventory_outlined,
-                  selectedIcon: Icons.inventory,
-                  label: 'produits',
+                  icon: Icons.inventory_2_outlined,
+                  selectedIcon: Icons.inventory_2_rounded,
+                  label: 'Produits',
                   index: 3,
                 ),
                 _buildNavItem(
-                  icon: Icons.settings_outlined,
-                  selectedIcon: Icons.settings,
-                  label: 'Paramètres',
+                  icon: Icons.tune_outlined,
+                  selectedIcon: Icons.tune_rounded,
+                  label: 'Params',
                   index: 4,
                 ),
               ],
@@ -105,34 +105,43 @@ class _MainPageAdminState extends State<MainPageAdmin> {
           _selectedIndex = index;
         });
       },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            isSelected ? selectedIcon : icon,
-            color: isSelected ? Color(0xFF3B82F6) : Colors.grey,
-            size: 24,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? Color(0xFF3B82F6) : Colors.grey,
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            ),
-          ),
-          if (isSelected)
-            Container(
-              margin: const EdgeInsets.only(top: 4),
-              height: 2,
-              width: 20,
-              decoration: BoxDecoration(
-                color: const Color(0xFF3B82F6),
-                // borderRadius: BorderRadius.circular(1),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFF7C3AED).withOpacity(0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: Icon(
+                isSelected ? selectedIcon : icon,
+                key: ValueKey(isSelected ? selectedIcon : icon),
+                color: isSelected
+                    ? const Color(0xFF7C3AED)
+                    : Colors.grey.shade600,
+                size: 26,
               ),
             ),
-        ],
+            const SizedBox(height: 6),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 300),
+              style: TextStyle(
+                color: isSelected
+                    ? const Color(0xFF7C3AED)
+                    : Colors.grey.shade600,
+                fontSize: isSelected ? 13 : 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              ),
+              child: Text(label),
+            ),
+          ],
+        ),
       ),
     );
   }
