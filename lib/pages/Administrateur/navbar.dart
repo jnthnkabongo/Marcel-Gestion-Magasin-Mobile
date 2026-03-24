@@ -110,7 +110,7 @@ class _MainPageAdminState extends State<MainPageAdmin> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF7C3AED).withOpacity(0.1)
+              ? const Color(0xFF3B82F6).withOpacity(0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(15),
         ),
@@ -123,7 +123,7 @@ class _MainPageAdminState extends State<MainPageAdmin> {
                 isSelected ? selectedIcon : icon,
                 key: ValueKey(isSelected ? selectedIcon : icon),
                 color: isSelected
-                    ? const Color(0xFF7C3AED)
+                    ? const Color(0xFF3B82F6)
                     : Colors.grey.shade600,
                 size: 26,
               ),
@@ -133,7 +133,7 @@ class _MainPageAdminState extends State<MainPageAdmin> {
               duration: const Duration(milliseconds: 300),
               style: TextStyle(
                 color: isSelected
-                    ? const Color(0xFF7C3AED)
+                    ? const Color(0xFF3B82F6)
                     : Colors.grey.shade600,
                 fontSize: isSelected ? 13 : 12,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,

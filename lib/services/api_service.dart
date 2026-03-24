@@ -5,15 +5,16 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static String get baseUrl {
-    if (kIsWeb) {
-      return 'http://localhost:8000';
-    } else if (Platform.isAndroid) {
-      return 'http://10.0.2.2:8000';
-    } else {
-      return 'http://192.168.1.66:8000';
-    }
-  }
+  static const String baseUrl = 'http://192.168.1.207:8000'; //Windows
+  // static String get baseUrl {
+  //   if (kIsWeb) {
+  //     return 'http://localhost:8000';
+  //   } else if (Platform.isAndroid) {
+  //     return 'http://10.0.2.2:8000';
+  //   } else {
+  //     return 'http://192.168.1.207:8000';
+  //   }
+  // }
 
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'user';

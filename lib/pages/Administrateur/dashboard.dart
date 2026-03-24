@@ -403,7 +403,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               Icons.sell_outlined,
               'Ventes',
               const Color(0xFFDC2626),
-              'Configuration',
+              'Toutes les ventes',
               '$_totalSales',
               () {
                 // TODO: Naviguer vers les paramètres
@@ -477,7 +477,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               Text(
                 _statsLoading ? '...' : value,
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: color,
                 ),
