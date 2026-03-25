@@ -282,7 +282,7 @@ class _ProduitPageState extends State<ProduitPage>
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.blue.withOpacity(0.3),
+                      color: Colors.blue.withValues(alpha: 0.3),
                       blurRadius: 15,
                       offset: const Offset(0, 8),
                     ),
@@ -355,7 +355,7 @@ class _ProduitPageState extends State<ProduitPage>
                           transform: Matrix4.translationValues(0, 0, 0),
                           child: Card(
                             elevation: 8,
-                            shadowColor: Colors.black.withOpacity(0.1),
+                            shadowColor: Colors.black.withValues(alpha: 0.1),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -373,7 +373,7 @@ class _ProduitPageState extends State<ProduitPage>
                                 leading: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: Colors.blue.withOpacity(0.1),
+                                    color: Colors.blue.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(
@@ -464,7 +464,7 @@ class _ProduitPageState extends State<ProduitPage>
                                         ),
                                         const SizedBox(width: 2),
                                         Text(
-                                          "${produitItem['prix_vente'] ?? 0} FC",
+                                          "${produitItem['prix_vente'] ?? 0} \$",
                                           style: TextStyle(
                                             color: Colors.grey[600],
                                             fontSize: 14,
@@ -548,10 +548,10 @@ class _ProduitPageState extends State<ProduitPage>
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
+                color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
+                  color: Colors.white.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -560,7 +560,7 @@ class _ProduitPageState extends State<ProduitPage>
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(icon, color: Colors.white, size: 20),
@@ -578,7 +578,7 @@ class _ProduitPageState extends State<ProduitPage>
                     title,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -658,7 +658,7 @@ class _ProduitPageState extends State<ProduitPage>
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
@@ -684,7 +684,7 @@ class _ProduitPageState extends State<ProduitPage>
                             '#${produit['id']} - ${_formatDate(produit['created_at'])}',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                             ),
                           ),
                         ],
@@ -696,7 +696,7 @@ class _ProduitPageState extends State<ProduitPage>
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
@@ -721,7 +721,7 @@ class _ProduitPageState extends State<ProduitPage>
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
@@ -766,7 +766,7 @@ class _ProduitPageState extends State<ProduitPage>
                     ),
                     _buildDetailRow(
                       'Prix unitaire',
-                      '${produit['prix_vente'] ?? 0} FC',
+                      '${produit['prix_vente'] ?? 0} \$',
                       Icons.attach_money,
                     ),
                     const SizedBox(height: 8),
@@ -774,7 +774,7 @@ class _ProduitPageState extends State<ProduitPage>
                     const SizedBox(height: 8),
                     _buildDetailRow(
                       'Total',
-                      '${_calculateTotalForProduct(produit)} FC',
+                      '${_calculateTotalForProduct(produit)} \$',
                       Icons.monetization_on,
                       isTotal: true,
                     ),
@@ -825,8 +825,8 @@ class _ProduitPageState extends State<ProduitPage>
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: isTotal
-                  ? const Color(0xFF3B82F6).withOpacity(0.1)
-                  : Colors.grey.withOpacity(0.1),
+                  ? const Color(0xFF3B82F6).withValues(alpha: 0.1)
+                  : Colors.grey.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(

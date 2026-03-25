@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
 
 import 'package:marcelgestion/services/api_service.dart';
 
@@ -156,7 +155,7 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
                                 margin: const EdgeInsets.only(bottom: 12),
                                 child: Card(
                                   elevation: 4,
-                                  shadowColor: Colors.black.withOpacity(0.1),
+                                  shadowColor: Colors.black.withValues(alpha: 0.1),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -179,7 +178,7 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
                                         decoration: BoxDecoration(
                                           color: _getActionColor(
                                             item['action'],
-                                          ).withOpacity(0.1),
+                                          ).withValues(alpha: 0.1),
                                           borderRadius: BorderRadius.circular(
                                             10,
                                           ),
@@ -213,7 +212,7 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
                                             decoration: BoxDecoration(
                                               color: _getActionColor(
                                                 item['action'],
-                                              ).withOpacity(0.1),
+                                              ).withValues(alpha: 0.1),
                                               borderRadius:
                                                   BorderRadius.circular(20),
                                             ),
@@ -343,7 +342,7 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(50),
             ),
             child: Icon(Icons.history, size: 64, color: Colors.grey[400]),
@@ -440,7 +439,7 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: _getActionColor(item['action']).withOpacity(0.1),
+                color: _getActionColor(item['action']).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -530,7 +529,7 @@ class _AuditPageState extends State<AuditPage> with TickerProviderStateMixin {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF3B82F6).withOpacity(0.1),
+                color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(

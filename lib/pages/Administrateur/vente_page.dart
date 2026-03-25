@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:marcelgestion/pages/Administrateur/dashboard.dart';
 import 'package:marcelgestion/pages/Administrateur/navbar.dart';
-import 'package:marcelgestion/pages/User/dashboard.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../services/api_service.dart';
 
@@ -821,7 +819,7 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
   }
 
   void _showManualEntry() {
-    final TextEditingController _codeController = TextEditingController();
+    final TextEditingController codeController = TextEditingController();
 
     showDialog(
       context: context,
@@ -908,7 +906,7 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
                     ),
                     const SizedBox(height: 16),
                     TextField(
-                      controller: _codeController,
+                      controller: codeController,
                       keyboardType: TextInputType.number,
                       style: const TextStyle(
                         fontSize: 16,
@@ -984,11 +982,9 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
                       ),
                       child: ElevatedButton(
                         onPressed: () {
-                          if (_codeController.text.trim().isNotEmpty) {
+                          if (codeController.text.trim().isNotEmpty) {
                             Navigator.pop(context);
-                            _searchProductByBarcode(
-                              _codeController.text.trim(),
-                            );
+                            _searchProductByBarcode(codeController.text.trim());
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -1795,16 +1791,16 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
       return;
     }
 
-    final TextEditingController _quantityController = TextEditingController(
+    final TextEditingController quantityController = TextEditingController(
       text: '1',
     );
-    final TextEditingController _clientController = TextEditingController();
+    final TextEditingController clientController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) {
-          int quantity = int.tryParse(_quantityController.text) ?? 1;
+          int quantity = int.tryParse(quantityController.text) ?? 1;
           double total =
               (double.tryParse(produit['prix_vente']?.toString() ?? '0') ?? 0) *
               quantity;
@@ -1895,7 +1891,7 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
                       children: [
                         // Client
                         TextField(
-                          controller: _clientController,
+                          controller: clientController,
                           decoration: InputDecoration(
                             labelText: 'Nom du client',
                             hintText: 'Entrez le nom du client',
@@ -1918,7 +1914,7 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
                           children: [
                             Expanded(
                               child: TextField(
-                                controller: _quantityController,
+                                controller: quantityController,
                                 keyboardType: TextInputType.number,
                                 decoration: InputDecoration(
                                   labelText: 'Quantité',
@@ -1938,9 +1934,10 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
                                   setState(() {
                                     quantity = int.tryParse(value) ?? 1;
                                     if (quantity < 1) quantity = 1;
-                                    if (quantity > stockCount)
+                                    if (quantity > stockCount) {
                                       quantity = stockCount;
-                                    _quantityController.text = quantity
+                                    }
+                                    quantityController.text = quantity
                                         .toString();
                                     total =
                                         (double.tryParse(
@@ -2068,7 +2065,7 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
                           ),
                           child: ElevatedButton(
                             onPressed: () {
-                              if (_clientController.text.trim().isEmpty) {
+                              if (clientController.text.trim().isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text(
@@ -2083,7 +2080,7 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
                               _effectuerVente(
                                 produit,
                                 quantity,
-                                _clientController.text.trim(),
+                                clientController.text.trim(),
                               );
                               Navigator.pop(context);
                             },

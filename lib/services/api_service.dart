@@ -1,7 +1,5 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
@@ -377,7 +375,7 @@ class ApiService {
         return {
           'success': false,
           'message': data['message'] ?? 'Erreur lors de la vente',
-          'errors': data['errors'] ?? null,
+          'errors': data['errors'],
         };
       }
     } catch (e) {

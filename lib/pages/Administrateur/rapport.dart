@@ -213,7 +213,7 @@ class _RapportPageState extends State<RapportPage>
             children: [
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: _periodeSelectionnee,
+                  initialValue: _periodeSelectionnee,
                   decoration: InputDecoration(
                     labelText: 'Période',
                     border: OutlineInputBorder(
@@ -340,12 +340,12 @@ class _RapportPageState extends State<RapportPage>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [color.withOpacity(0.8), color],
+          colors: [color.withValues(alpha: 0.8), color],
         ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.3),
+            color: color.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -367,7 +367,7 @@ class _RapportPageState extends State<RapportPage>
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                Icon(icon, color: Colors.white.withOpacity(0.8), size: 24),
+                Icon(icon, color: Colors.white.withValues(alpha: 0.8), size: 24),
               ],
             ),
             const Spacer(),
@@ -384,7 +384,7 @@ class _RapportPageState extends State<RapportPage>
               Text(
                 subtitle,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   fontSize: 12,
                 ),
               ),
@@ -403,7 +403,7 @@ class _RapportPageState extends State<RapportPage>
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -517,7 +517,7 @@ class _RapportPageState extends State<RapportPage>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: beneficeColor.withOpacity(0.1),
+                color: beneficeColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -660,7 +660,7 @@ class _RapportPageState extends State<RapportPage>
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -681,7 +681,7 @@ class _RapportPageState extends State<RapportPage>
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(

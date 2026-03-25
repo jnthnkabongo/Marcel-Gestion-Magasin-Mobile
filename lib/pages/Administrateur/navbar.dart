@@ -41,7 +41,7 @@ class _MainPageAdminState extends State<MainPageAdmin> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),
@@ -110,7 +110,7 @@ class _MainPageAdminState extends State<MainPageAdmin> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF3B82F6).withOpacity(0.1)
+              ? const Color(0xFF3B82F6).withValues(alpha: 0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(15),
         ),
