@@ -1,16 +1,19 @@
 import 'dart:convert';
+import 'dart:io';
+//import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.1.207:8000'; //Windows
+  //static const String baseUrl = 'https://baramingap.alwaysdata.net'; //Windows
+  static const String baseUrl = 'http://192.168.1.71:8000';
   // static String get baseUrl {
   //   if (kIsWeb) {
-  //     return 'http://localhost:8000';
+  //     return 'https://baramingap.alwaysdata.net';
   //   } else if (Platform.isAndroid) {
   //     return 'http://10.0.2.2:8000';
   //   } else {
-  //     return 'http://192.168.1.207:8000';
+  //     return 'http://192.168.1.71:8000';
   //   }
   // }
 
@@ -38,7 +41,10 @@ class ApiService {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/api/login'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
         body: jsonEncode({'email': email, 'password': password}),
       );
 
@@ -74,7 +80,10 @@ class ApiService {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/api/register'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
         body: jsonEncode({'name': name, 'email': email, 'password': password}),
       );
 

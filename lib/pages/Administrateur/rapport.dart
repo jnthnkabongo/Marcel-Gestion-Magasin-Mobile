@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../services/api_service.dart';
+import 'package:marcelgestion/services/api_service.dart';
+import 'package:marcelgestion/services/api_service.dart';
 
 class RapportPage extends StatefulWidget {
   const RapportPage({super.key});
@@ -10,7 +11,9 @@ class RapportPage extends StatefulWidget {
 
 class _RapportPageState extends State<RapportPage>
     with TickerProviderStateMixin {
-  late TabController _tabController;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
   String _periodeSelectionnee = 'mois';
 
   // Variables pour les données réelles
@@ -28,7 +31,26 @@ class _RapportPageState extends State<RapportPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeInOut),
+      ),
+    );
+
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
+          ),
+        );
+
     _loadData();
   }
 
@@ -38,29 +60,22 @@ class _RapportPageState extends State<RapportPage>
     });
 
     try {
-      // Charger toutes les données en parallèle
-      final results = await Future.wait([
-        ApiService.getVentes(),
+      final responses = await Future.wait([
         ApiService.getProduits(),
+        ApiService.getVentes(),
       ]);
 
-      // Ventes
-      if (results[0]['success'] == true) {
-        _ventes = List<Map<String, dynamic>>.from(results[0]['ventes'] ?? []);
-      }
-
-      // Produits
-      if (results[1]['success'] == true) {
+      setState(() {
         _produits = List<Map<String, dynamic>>.from(
-          results[1]['produits'] ?? [],
+          responses[0]['produits'] ?? [],
         );
-      }
+        _ventes = List<Map<String, dynamic>>.from(responses[1]['ventes'] ?? []);
+        _isLoading = false;
+      });
 
-      // Calculer les statistiques
       _calculateBenefices();
+      _animationController.forward();
     } catch (e) {
-      print('Erreur lors du chargement des données: $e');
-    } finally {
       setState(() {
         _isLoading = false;
       });
@@ -68,76 +83,50 @@ class _RapportPageState extends State<RapportPage>
   }
 
   void _calculateBenefices() {
-    _beneficesParProduit = [];
+    _beneficesParProduit.clear();
     _beneficeTotal = 0;
-    _totalVentes = 0;
+    _totalVentes = _ventes.length;
+    _meilleurProduit = null;
 
-    // Créer une map pour regrouper les bénéfices par produit
-    Map<String, Map<String, dynamic>> produitsMap = {};
+    for (var produit in _produits) {
+      double prixUnitaire = _parseDouble(produit['prix_unitaire']);
+      int quantiteVendue = 0;
+      double totalVentes = 0;
+      double coutTotal = 0;
 
-    for (var vente in _ventes) {
-      if (vente['vente_details'] != null) {
-        for (var detail in vente['vente_details']) {
-          String produitNom = 'Produit inconnu';
-          double prixVente = 0;
-          double prixAchat = 0;
+      // Calculer les statistiques pour ce produit
+      for (var vente in _ventes) {
+        if (vente['produit_id'] == produit['id']) {
+          quantiteVendue += (vente['quantite'] as int? ?? 0);
+          totalVentes += _parseDouble(vente['total']);
+        }
+      }
 
-          // Récupérer les informations du produit
-          if (detail['produit_unite'] != null &&
-              detail['produit_unite']['produit'] != null) {
-            var produit = detail['produit_unite']['produit'];
-            produitNom = produit['nom'] ?? 'Produit inconnu';
-            prixAchat = _parseDouble(produit['prix_achat']);
-          }
+      coutTotal = prixUnitaire * quantiteVendue;
+      double benefice = totalVentes - coutTotal;
 
-          prixVente = _parseDouble(detail['prix_unitaire']);
-          double beneficeUnitaire = prixVente - prixAchat;
-          double totalVente = _parseDouble(detail['total']);
+      if (quantiteVendue > 0) {
+        _beneficesParProduit.add({
+          'nom': produit['nom'] ?? 'Produit sans nom',
+          'prix_unitaire': prixUnitaire,
+          'quantite_vendue': quantiteVendue,
+          'total_ventes': totalVentes,
+          'cout_total': coutTotal,
+          'benefice': benefice,
+          'marge': prixUnitaire > 0 ? (benefice / totalVentes) * 100 : 0,
+        });
 
-          // Ajouter à la map du produit
-          if (!produitsMap.containsKey(produitNom)) {
-            produitsMap[produitNom] = {
-              'nom': produitNom,
-              'quantite_vendue': 0,
-              'prix_unitaire': prixVente,
-              'total_ventes': 0,
-              'cout_total': 0,
-              'benefice': 0,
-              'marge': 0,
-            };
-          }
+        _beneficeTotal += benefice;
 
-          var produitData = produitsMap[produitNom]!;
-          produitData['quantite_vendue']++;
-          produitData['total_ventes'] += totalVente;
-          produitData['cout_total'] += prixAchat;
-          produitData['benefice'] += beneficeUnitaire;
-          produitData['marge'] = produitData['total_ventes'] > 0
-              ? (produitData['benefice'] / produitData['total_ventes']) * 100
-              : 0;
+        // Mettre à jour le meilleur produit
+        if (_meilleurProduit == null ||
+            benefice > (_meilleurProduit?['benefice'] ?? 0)) {
+          _meilleurProduit = {'nom': produit['nom'], 'benefice': benefice};
         }
       }
     }
 
-    // Convertir en liste et calculer les totaux
-    _beneficesParProduit = produitsMap.values.toList();
-    _totalVentes = _ventes.length;
-
-    for (var produit in _beneficesParProduit) {
-      _beneficeTotal += produit['benefice'];
-    }
-
     _beneficeMoyen = _totalVentes > 0 ? _beneficeTotal / _totalVentes : 0;
-
-    // Trouver le meilleur produit
-    if (_beneficesParProduit.isNotEmpty) {
-      _meilleurProduit = _beneficesParProduit.reduce(
-        (a, b) => a['benefice'] > b['benefice'] ? a : b,
-      );
-    }
-
-    // Trier par bénéfice décroissant
-    _beneficesParProduit.sort((a, b) => b['benefice'].compareTo(a['benefice']));
   }
 
   double _parseDouble(dynamic value) {
@@ -150,112 +139,150 @@ class _RapportPageState extends State<RapportPage>
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Rapport de Ventes'),
-        backgroundColor: const Color(0xFF7C3AED),
-        foregroundColor: Colors.white,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          tabs: const [
-            Tab(text: 'Bénéfices', icon: Icon(Icons.trending_up)),
-            Tab(text: 'Produits', icon: Icon(Icons.inventory)),
-            Tab(text: 'Ventes', icon: Icon(Icons.shopping_cart)),
-            Tab(text: 'Analyse', icon: Icon(Icons.analytics)),
-          ],
+      extendBodyBehindAppBar: true,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF3B82F6),
+              const Color(0xFF1D4ED8),
+              const Color(0xFF1E40AF),
+            ],
+            stops: const [0.0, 0.5, 1.0],
+          ),
         ),
-        actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
-        ],
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildModernAppBar(),
+              const SizedBox(height: 20),
+              Expanded(
+                child: _isLoading
+                    ? _buildLoadingState()
+                    : FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: Column(
+                            children: [
+                              _buildFiltersSection(),
+                              const SizedBox(height: 20),
+                              // Contenu des bénéfices
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.95),
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(30),
+                                      topRight: Radius.circular(30),
+                                    ),
+                                  ),
+                                  child: SingleChildScrollView(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          _buildSectionTitle(
+                                            'Vue d\'ensemble des Bénéfices',
+                                          ),
+                                          const SizedBox(height: 16),
+                                          _buildBeneficeCards(),
+                                          const SizedBox(height: 24),
+                                          _buildSectionTitle(
+                                            'Détail des Bénéfices par Produit',
+                                          ),
+                                          const SizedBox(height: 12),
+                                          _buildBeneficesTable(),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF7C3AED)),
-            )
-          : Column(
-              children: [
-                // Filtres
-                _buildFiltersSection(),
-
-                // Contenu des onglets
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildBeneficesTab(),
-                      _buildProduitsTab(),
-                      _buildVentesTab(),
-                      _buildAnalyseTab(),
-                    ],
-                  ),
-                ),
-              ],
-            ),
     );
   }
 
-  Widget _buildFiltersSection() {
+  Widget _buildModernAppBar() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      color: Colors.grey.shade50,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
         children: [
           Row(
             children: [
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: _periodeSelectionnee,
-                  decoration: InputDecoration(
-                    labelText: 'Période',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFF7C3AED)),
-                    ),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'jour', child: Text("Aujourd'hui")),
-                    DropdownMenuItem(
-                      value: 'semaine',
-                      child: Text('Cette semaine'),
-                    ),
-                    DropdownMenuItem(value: 'mois', child: Text('Ce mois')),
-                    DropdownMenuItem(
-                      value: 'annee',
-                      child: Text('Cette année'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'personnalise',
-                      child: Text('Personnalisé'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      _periodeSelectionnee = value!;
-                    });
-                  },
+                ),
+                child: const Icon(
+                  Icons.trending_up,
+                  color: Colors.white,
+                  size: 28,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: ElevatedButton(
-                  onPressed: _loadData,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF7C3AED),
-                    foregroundColor: Colors.white,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Rapport des Bénéfices',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Analyse des performances de vente',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              GestureDetector(
+                onTap: _loadData,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.3),
+                    ),
                   ),
-                  child: const Text('Appliquer'),
+                  child: const Icon(
+                    Icons.refresh,
+                    color: Colors.white,
+                    size: 24,
+                  ),
                 ),
               ),
             ],
@@ -265,22 +292,198 @@ class _RapportPageState extends State<RapportPage>
     );
   }
 
-  Widget _buildBeneficesTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+  Widget _buildLoadingState() {
+    return Center(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Cartes de bénéfices généraux
-          _buildBeneficeCards(),
-
-          const SizedBox(height: 24),
-
-          // Tableau des bénéfices par produit
-          _buildSectionTitle('Détail des Bénéfices par Produit'),
-          const SizedBox(height: 16),
-          _buildBeneficesTable(),
+          TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 1500),
+            tween: Tween<double>(begin: 0.0, end: 1.0),
+            builder: (context, animation, child) {
+              return Transform.scale(
+                scale: animation,
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFF3B82F6),
+                        const Color(0xFF1D4ED8),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: const Icon(
+                    Icons.analytics,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Chargement des données...',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFiltersSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.filter_list,
+                  color: Color(0xFF3B82F6),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Filtres',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: DropdownButtonFormField<String>(
+                    value: _periodeSelectionnee,
+                    decoration: InputDecoration(
+                      labelText: 'Période',
+                      labelStyle: TextStyle(color: Colors.grey.shade600),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    icon: const Icon(
+                      Icons.calendar_today,
+                      color: Color(0xFF3B82F6),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'jour',
+                        child: Text("Aujourd'hui"),
+                      ),
+                      DropdownMenuItem(
+                        value: 'semaine',
+                        child: Text('Cette semaine'),
+                      ),
+                      DropdownMenuItem(value: 'mois', child: Text('Ce mois')),
+                      DropdownMenuItem(
+                        value: 'annee',
+                        child: Text('Cette année'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'personnalise',
+                        child: Text('Personnalisé'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _periodeSelectionnee = value!;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              ElevatedButton(
+                onPressed: _loadData,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3B82F6),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.search, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'Appliquer',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      decoration: BoxDecoration(
+        border: Border(
+          left: BorderSide(color: const Color(0xFF3B82F6), width: 4),
+        ),
+      ),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF1F2937),
+          letterSpacing: -0.5,
+        ),
       ),
     );
   }
@@ -291,36 +494,36 @@ class _RapportPageState extends State<RapportPage>
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 2,
       childAspectRatio: 1.5,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
       children: [
-        // Bénéfice total
-        _buildBeneficeCard(
+        _buildAnimatedBeneficeCard(
           'Bénéfice Total',
           '${_beneficeTotal.toStringAsFixed(0)} FCFA',
           Icons.trending_up,
-          Colors.green,
+          [const Color(0xFF3B82F6), const Color(0xFF1D4ED8)],
+          'success',
         ),
-        // Total ventes
-        _buildBeneficeCard(
+        _buildAnimatedBeneficeCard(
           'Total Ventes',
           '$_totalVentes',
           Icons.shopping_cart,
-          Colors.blue,
+          [const Color(0xFF10B981), const Color(0xFF059669)],
+          'info',
         ),
-        // Bénéfice moyen
-        _buildBeneficeCard(
+        _buildAnimatedBeneficeCard(
           'Bénéfice Moyen',
           '${_beneficeMoyen.toStringAsFixed(0)} FCFA',
           Icons.calculate,
-          Colors.purple,
+          [const Color(0xFF1E40AF), const Color(0xFF3B82F6)],
+          'primary',
         ),
-        // Meilleur produit
-        _buildBeneficeCard(
+        _buildAnimatedBeneficeCard(
           'Meilleur Produit',
           _meilleurProduit?['nom'] ?? 'N/A',
           Icons.star,
-          Colors.orange,
+          [const Color(0xFFF59E0B), const Color(0xFFD97706)],
+          'warning',
           subtitle:
               '${(_meilleurProduit?['benefice'] ?? 0).toStringAsFixed(0)} FCFA',
         ),
@@ -328,127 +531,282 @@ class _RapportPageState extends State<RapportPage>
     );
   }
 
-  Widget _buildBeneficeCard(
+  Widget _buildAnimatedBeneficeCard(
     String title,
     String value,
     IconData icon,
-    Color color, {
+    List<Color> gradientColors,
+    String type, {
     String? subtitle,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [color.withValues(alpha: 0.8), color],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 800),
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      builder: (context, animation, child) {
+        return Transform.scale(
+          scale: animation,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: gradientColors,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: gradientColors.first.withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
                 ),
-                Icon(icon, color: Colors.white.withValues(alpha: 0.8), size: 24),
               ],
             ),
-            const Spacer(),
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(icon, color: Colors.white, size: 18),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          _getTrendIcon(type),
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 10,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
               ),
             ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
+  }
+
+  IconData _getTrendIcon(String type) {
+    switch (type) {
+      case 'success':
+        return Icons.trending_up;
+      case 'info':
+        return Icons.info;
+      case 'primary':
+        return Icons.show_chart;
+      case 'warning':
+        return Icons.warning;
+      default:
+        return Icons.trending_flat;
+    }
   }
 
   Widget _buildBeneficesTable() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Column(
         children: [
-          // En-tête du tableau
+          // En-tête moderne du tableau
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              gradient: LinearGradient(
+                colors: [const Color(0xFF3B82F6), const Color(0xFF1D4ED8)],
+              ),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
               ),
             ),
             child: Row(
               children: [
-                Expanded(flex: 1, child: _buildTableHeader('N°')),
-                Expanded(flex: 3, child: _buildTableHeader('Produit')),
-                Expanded(flex: 2, child: _buildTableHeader('Prix Unitaire')),
-                Expanded(flex: 2, child: _buildTableHeader('Total Ventes')),
-                Expanded(flex: 2, child: _buildTableHeader('Coût Total')),
-                Expanded(flex: 2, child: _buildTableHeader('Bénéfice')),
-                Expanded(flex: 1, child: _buildTableHeader('Marge')),
+                Expanded(
+                  flex: 1,
+                  child: Text(
+                    'N°',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    'Produit',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Prix U.',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Total V.',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Coût T.',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Bénéfice',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Text(
+                    'Marge',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
-          // Données du tableau
+          // Données du tableau avec design amélioré
           if (_beneficesParProduit.isEmpty)
             Container(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.all(40),
               child: Column(
                 children: [
-                  Icon(Icons.bar_chart, size: 48, color: Colors.grey.shade300),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Aucune donnée trouvée pour cette période',
-                    style: TextStyle(color: Colors.grey.shade600),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Essayez de modifier les filtres ou la période',
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.bar_chart,
+                          size: 48,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Aucune donnée trouvée',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Essayez de modifier les filtres ou la période',
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -456,9 +814,10 @@ class _RapportPageState extends State<RapportPage>
           else
             ...List.generate(
               _beneficesParProduit.length,
-              (index) => _buildBeneficeTableRow(
+              (index) => _buildModernBeneficeTableRow(
                 index + 1,
                 _beneficesParProduit[index],
+                index.isEven,
               ),
             ),
         ],
@@ -466,66 +825,108 @@ class _RapportPageState extends State<RapportPage>
     );
   }
 
-  Widget _buildTableHeader(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontWeight: FontWeight.bold,
-        fontSize: 12,
-        color: Color(0xFF6B7280),
-      ),
-    );
-  }
-
-  Widget _buildBeneficeTableRow(int rank, Map<String, dynamic> produit) {
+  Widget _buildModernBeneficeTableRow(
+    int rank,
+    Map<String, dynamic> produit,
+    bool isEven,
+  ) {
     double benefice = produit['benefice'];
     double marge = produit['marge'];
     Color beneficeColor = benefice > 0 ? Colors.green : Colors.red;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+        color: isEven ? Colors.grey.shade50 : Colors.white,
+        border: Border(
+          bottom: BorderSide(color: Colors.grey.shade200, width: 0.5),
+        ),
       ),
       child: Row(
         children: [
-          Expanded(flex: 1, child: Text('$rank')),
+          Expanded(
+            flex: 1,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                '$rank',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF3B82F6),
+                  fontSize: 11,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
           Expanded(
             flex: 3,
             child: Row(
               children: [
-                Icon(Icons.inventory, color: Colors.blue, size: 16),
-                const SizedBox(width: 8),
-                Expanded(child: Text(produit['nom'])),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Icon(Icons.inventory, color: Colors.blue, size: 12),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    produit['nom'],
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
           ),
           Expanded(
             flex: 2,
-            child: Text('${produit['prix_unitaire'].toStringAsFixed(0)} FCFA'),
+            child: Text(
+              '${produit['prix_unitaire'].toStringAsFixed(0)} FCFA',
+              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
+            ),
           ),
           Expanded(
             flex: 2,
-            child: Text('${produit['total_ventes'].toStringAsFixed(0)} FCFA'),
+            child: Text(
+              '${produit['total_ventes'].toStringAsFixed(0)} FCFA',
+              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
+            ),
           ),
           Expanded(
             flex: 2,
-            child: Text('${produit['cout_total'].toStringAsFixed(0)} FCFA'),
+            child: Text(
+              '${produit['cout_total'].toStringAsFixed(0)} FCFA',
+              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
+            ),
           ),
           Expanded(
             flex: 2,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               decoration: BoxDecoration(
                 color: beneficeColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: beneficeColor.withValues(alpha: 0.3)),
               ),
               child: Text(
                 '${benefice.toStringAsFixed(0)} FCFA',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   color: beneficeColor,
                   fontWeight: FontWeight.bold,
-                  fontSize: 12,
+                  fontSize: 10,
                 ),
               ),
             ),
@@ -533,305 +934,51 @@ class _RapportPageState extends State<RapportPage>
           Expanded(
             flex: 1,
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  marge > 50
-                      ? Icons.arrow_upward
-                      : marge > 20
-                      ? Icons.arrow_forward
-                      : Icons.arrow_downward,
-                  color: marge > 50
-                      ? Colors.green
-                      : marge > 20
-                      ? Colors.yellow
-                      : Colors.red,
-                  size: 16,
-                ),
-                const SizedBox(width: 4),
-                Text('${marge.toStringAsFixed(1)}%'),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProduitsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Statistiques des Produits'),
-          const SizedBox(height: 16),
-          _buildProduitsStats(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVentesTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Historique des Ventes'),
-          const SizedBox(height: 16),
-          _buildVentesList(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAnalyseTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Analyse Graphique'),
-          const SizedBox(height: 16),
-          _buildCharts(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: Color(0xFF7C3AED),
-      ),
-    );
-  }
-
-  Widget _buildProduitsStats() {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      childAspectRatio: 1.5,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      children: [
-        _buildStatCard(
-          'Total Produits',
-          '${_produits.length}',
-          Icons.inventory,
-          Colors.blue,
-        ),
-        _buildStatCard(
-          'Stock Disponible',
-          '${_getStockDisponible()}',
-          Icons.warehouse,
-          Colors.green,
-        ),
-        _buildStatCard(
-          'Ruptures',
-          '${_getRuptures()}',
-          Icons.warning,
-          Colors.red,
-        ),
-        _buildStatCard(
-          'Valeur Stock',
-          '${_getValeurStock().toStringAsFixed(0)} FCFA',
-          Icons.attach_money,
-          Colors.orange,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: color, size: 24),
-                const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
+                  padding: const EdgeInsets.all(1),
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
+                    color: _getMargeColor(marge).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(3),
                   ),
+                  child: Icon(
+                    _getMargeIcon(marge),
+                    color: _getMargeColor(marge),
+                    size: 8,
+                  ),
+                ),
+                const SizedBox(width: 1),
+                Flexible(
                   child: Text(
-                    value,
+                    '${marge.toStringAsFixed(1)}%',
                     style: TextStyle(
-                      color: color,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 9,
+                      color: _getMargeColor(marge),
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildVentesList() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: ListView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: _ventes.length,
-        itemBuilder: (context, index) {
-          final vente = _ventes[index];
-          return ListTile(
-            leading: Icon(Icons.receipt, color: Colors.blue),
-            title: Text('Vente #${vente['id'] ?? index + 1}'),
-            subtitle: Text('Client: ${vente['nom_client'] ?? 'N/A'}'),
-            trailing: Text('${vente['total'] ?? 0} FCFA'),
-          );
-        },
-      ),
-    );
+  Color _getMargeColor(double marge) {
+    if (marge >= 20) return Colors.green;
+    if (marge >= 10) return Colors.orange;
+    return Colors.red;
   }
 
-  Widget _buildCharts() {
-    return Container(
-      height: 300,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            const Text(
-              'Répartition des Bénéfices',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF7C3AED),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(child: _buildSimpleBarChart()),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSimpleBarChart() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: _beneficesParProduit.take(6).map((produit) {
-        double height = produit['benefice'] > 0
-            ? (produit['benefice'] / _beneficeTotal).clamp(0.0, 1.0)
-            : 0.0;
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Container(
-              width: 30,
-              height: 200 * height,
-              decoration: BoxDecoration(
-                color: produit['benefice'] > 0 ? Colors.green : Colors.red,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(4),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: 40,
-              child: Text(
-                produit['nom'].length > 8
-                    ? '${produit['nom'].substring(0, 8)}...'
-                    : produit['nom'],
-                style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
-        );
-      }).toList(),
-    );
-  }
-
-  int _getStockDisponible() {
-    int stock = 0;
-    for (var produit in _produits) {
-      if (produit['produit_unites'] != null) {
-        stock += (produit['produit_unites'] as List)
-            .where((unite) => unite['statut'] == 'en_stock')
-            .length;
-      }
-    }
-    return stock;
-  }
-
-  int _getRuptures() {
-    int ruptures = 0;
-    for (var produit in _produits) {
-      if (produit['produit_unites'] != null) {
-        var unites = produit['produit_unites'] as List;
-        if (unites.every((unite) => unite['statut'] == 'vendu')) {
-          ruptures++;
-        }
-      }
-    }
-    return ruptures;
-  }
-
-  double _getValeurStock() {
-    double valeur = 0;
-    for (var produit in _produits) {
-      if (produit['produit_unites'] != null) {
-        double prix = _parseDouble(produit['prix_vente']);
-        int stock = (produit['produit_unites'] as List)
-            .where((unite) => unite['statut'] == 'en_stock')
-            .length;
-        valeur += prix * stock;
-      }
-    }
-    return valeur;
+  IconData _getMargeIcon(double marge) {
+    if (marge >= 20) return Icons.trending_up;
+    if (marge >= 10) return Icons.trending_flat;
+    return Icons.trending_down;
   }
 }
