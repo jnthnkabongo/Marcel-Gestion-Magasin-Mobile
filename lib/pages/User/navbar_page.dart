@@ -16,8 +16,8 @@ class _MainPageUserState extends State<MainPageUser> {
 
   final List<Widget> _pages = [
     const UserDashboard(),
-    const VentePageUser(),
     const ProduitPageUser(),
+    const VentePageUser(),
     const ParametresPageUser(),
   ];
 

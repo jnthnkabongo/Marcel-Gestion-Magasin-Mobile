@@ -1,23 +1,23 @@
 import 'dart:convert';
-import 'dart:io';
-import 'package:flutter/foundation.dart';
+//import 'dart:io';
+//import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  //static const String baseUrl = 'https://baramingap.alwaysdata.net'; //Windows
-  //static const String baseUrl = 'http://192.168.1.71:8000';
-  static String get baseUrl {
-    if (kIsWeb) {
-      return 'https://baramingap.alwaysdata.net';
-    } else if (Platform.isAndroid) {
-      return 'http://10.0.2.2:8001';
-    } else if (Platform.isIOS) {
-      return 'http://127.0.0.1:8001';
-    } else {
-      return 'http://localhost:8001';
-    }
-  }
+  static const String baseUrl = 'https://baramingap.alwaysdata.net'; //Windows
+  //static const String baseUrl = 'http://127.0.0.1:8001';
+  // static String get baseUrl {
+  //   if (kIsWeb) {
+  //     return 'https://baramingap.alwaysdata.net';
+  //   } else if (Platform.isAndroid) {
+  //     return 'http://10.0.2.2:8001';
+  //   } else if (Platform.isIOS) {
+  //     return 'http://127.0.0.1:8001';
+  //   } else {
+  //     return 'http://localhost:8001';
+  //   }
+  // }
 
   // static String get baseUrl {
   //   if (kIsWeb) {
@@ -458,6 +458,40 @@ class ApiService {
       if (token == null) {
         return {'success': false, 'message': 'Token non trouvé'};
       }
+
+      // D'abord créer ou récupérer le client
+      final clientResponse = await http.post(
+        Uri.parse('$baseUrl/api/client-or-create'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'nom': venteData['nom_client']}),
+      );
+
+      print("Réponse création client: ${clientResponse.body}");
+      print("Status code création client: ${clientResponse.statusCode}");
+
+      Map<String, dynamic> clientData;
+      if (clientResponse.statusCode == 200 ||
+          clientResponse.statusCode == 201) {
+        clientData = jsonDecode(clientResponse.body);
+        print("Client créé/récupéré: $clientData");
+      } else {
+        print("Erreur création client: ${clientResponse.body}");
+        return {
+          'success': false,
+          'message': 'Erreur lors de la création du client',
+          'details': clientResponse.body,
+        };
+      }
+
+      // Ajouter client_id aux données de vente
+      venteData['client_id'] = clientData['client']['id'];
+
+      // Supprimer nom_client car la table ventes n'a pas cette colonne
+      venteData.remove('nom_client');
 
       final response = await http.post(
         Uri.parse('$baseUrl/api/vente-produit'),

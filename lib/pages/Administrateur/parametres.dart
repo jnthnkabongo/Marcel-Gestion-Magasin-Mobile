@@ -22,17 +22,17 @@ class _ParametresPagePageState extends State<ParametresPage> {
 
   Future<void> _loadUserInfo() async {
     try {
-      print("Tentative de chargement des infos utilisateur...");
+      //print("Tentative de chargement des infos utilisateur...");
       final userInfo = await ApiService.getUserData();
       //print("Réponse getUserData: $userInfo");
       //print("Type de userInfo: ${userInfo.runtimeType}");
 
       setState(() {
         _userInfo = userInfo;
-        print("_userInfo dans setState: $userInfo");
+        //print("_userInfo dans setState: $userInfo");
       });
     } catch (e) {
-      print("Erreur lors du chargement des infos utilisateur: $e");
+      //print("Erreur lors du chargement des infos utilisateur: $e");
     }
   }
 
@@ -117,7 +117,7 @@ class _ParametresPagePageState extends State<ParametresPage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Nom: ${_userInfo?['role'] ?? 'N/A'}',
+                          'Rôle: ${_userInfo?['role']?['nom'] ?? 'N/A'}',
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.8),
                             fontSize: 14,

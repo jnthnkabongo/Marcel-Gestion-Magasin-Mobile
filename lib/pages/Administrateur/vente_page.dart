@@ -20,6 +20,7 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
   List<Map<String, dynamic>> _filteredVentes = [];
   bool _isLoading = true;
   double _totalRevenu = 0;
+  double _valeurTotaleStock = 0;
 
   @override
   void initState() {
@@ -69,6 +70,7 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
         }).toList();
 
         _filteredVentes = _ventes;
+        _calculateStats(); // Calculer la valeur du stock
       } else {
         print(
           'Erreur: ${response['message'] ?? 'Erreur lors du chargement des produits'}',
@@ -85,6 +87,7 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
 
   void _calculateStats() {
     _totalRevenu = 0;
+    _valeurTotaleStock = 0;
 
     for (var v in _ventes) {
       final prixVente =
@@ -94,7 +97,7 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
               ?.where((unite) => unite['statut'] == 'en_stock')
               .length ??
           0;
-      _totalRevenu += prixVente * stockCount;
+      _valeurTotaleStock += prixVente * stockCount;
     }
   }
 
@@ -105,17 +108,17 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
       } else {
         final lowerQuery = query.toLowerCase();
         _filteredVentes = _ventes.where((v) {
-          final nom = v['nom']?.toString().toLowerCase() ?? '';
-          final id = v['id']?.toString().toLowerCase() ?? '';
-          final status = ((v['produit_unites'] as List?)?.isNotEmpty ?? false)
-              ? 'disponible'
-              : 'indisponible';
-
-          return nom.contains(lowerQuery) ||
-              id.contains(lowerQuery) ||
-              (status == 'disponible' && status.contains(lowerQuery));
+          return v['nom']?.toString().toLowerCase().contains(lowerQuery) ==
+                  true ||
+              v['categorie']?.toString().toLowerCase().contains(lowerQuery) ==
+                  true ||
+              v['marque']?.toString().toLowerCase().contains(lowerQuery) ==
+                  true ||
+              v['modele']?.toString().toLowerCase().contains(lowerQuery) ==
+                  true;
         }).toList();
       }
+      _calculateStats(); // Recalculer la valeur du stock filtré
     });
   }
 
@@ -123,13 +126,28 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
     if (createdAt == null) return 'N/A';
 
     try {
-      final dateStr = createdAt.toString();
-      final parts = dateStr.split(' ')[0].split('-'); // Format YYYY-MM-DD
+      String dateStr = createdAt.toString();
+
+      // Gérer les différents formats de date
+      if (dateStr.contains('T')) {
+        // Format ISO : 2026-03-26T14:11:24.0000000Z ou similaire
+        dateStr = dateStr.split(
+          'T',
+        )[0]; // Garder seulement la partie date YYYY-MM-DD
+      } else {
+        // Autres formats : prendre la première partie avant l'espace
+        dateStr = dateStr.split(' ')[0];
+      }
+
+      final parts = dateStr.split('-'); // Format YYYY-MM-DD
 
       if (parts.length == 3) {
-        return '${parts[2]}/${parts[1]}/${parts[0]}'; // DD/MM/YYYY
+        final year = parts[0].substring(
+          2,
+        ); // Prendre les 2 derniers chiffres de l'année
+        return '${parts[2]}/${parts[1]}/$year'; // DD/MM/YY
       }
-      return dateStr.split(' ')[0]; // Fallback to first part
+      return dateStr; // Fallback
     } catch (e) {
       return 'N/A';
     }
@@ -244,28 +262,10 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
                         ),
                         _buildAnimatedStatCard(
                           'Valeur Stock',
-                          '${_totalRevenu.toStringAsFixed(0)} \$',
+                          '${_valeurTotaleStock.toStringAsFixed(0)} \$',
                           Icons.monetization_on,
                           Colors.blue,
                         ),
-                        // _buildAnimatedStatCard(
-                        //   'Disponibles',
-                        //   _ventes
-                        //       .where(
-                        //         (v) =>
-                        //             ((v['produit_unites'] as List?)
-                        //                 ?.where(
-                        //                   (unite) =>
-                        //                       unite['statut'] == 'en_stock',
-                        //                 )
-                        //                 .isNotEmpty ??
-                        //             false),
-                        //       )
-                        //       .length
-                        //       .toString(),
-                        //   Icons.check_circle,
-                        //   Colors.orange,
-                        // ),
                       ],
                     ),
                   ],
@@ -1132,193 +1132,203 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
           .take(3)
           .join(', ');
 
-      _showVenteDetails(product);
+      // Afficher la SnackBar avec option de vente
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('✅ Produit trouvé: ${product['nom']} - $serialNumbers'),
-              // const SizedBox(height: 4),
-              // Text('📦 $stockCount unité(s) en stock'),
-              // if (serialNumbers.isNotEmpty) ...[
-              //   const SizedBox(height: 2),
-              //   Text('🏷️ N°: $serialNumbers${stockCount > 3 ? '...' : ''}'),
-              // ],
-            ],
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('✅ Produit trouvé: ${product['nom']} - $serialNumbers'),
+                const SizedBox(height: 4),
+                Text('📦 $stockCount unité(s) en stock'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 5), // Augmenté à 5 secondes
+            action: SnackBarAction(
+              label: 'Vendre',
+              textColor: Colors.white,
+              onPressed: () {
+                if (product != null) {
+                  _showClientDialog(product);
+                }
+              },
+            ),
           ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-          action: SnackBarAction(
-            label: 'Voir détails',
-            textColor: Colors.white,
-            onPressed: () => _showVenteDetails(product!),
-          ),
-        ),
-      );
+        );
+      }
     } else {
       // Produit non trouvé - afficher des options
-      showDialog(
-        context: context,
-        builder: (context) => Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => Dialog(
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header erreur
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Colors.red, Colors.redAccent],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.search_off,
-                          color: Colors.white,
-                          size: 24,
-                        ),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header erreur
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Colors.red, Colors.redAccent],
                       ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Produit non trouvé',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.search_off,
                             color: Colors.white,
+                            size: 24,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Message d'erreur
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.red.withOpacity(0.3)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Aucun produit trouvé pour ce code barres',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Code recherché: $barcode',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Suggestions:',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      ...[
-                        '• Vérifiez que le code barres est correct',
-                        '• Assurez-vous que le produit est en stock',
-                        '• Essayez une recherche manuelle dans la liste',
-                      ].map(
-                        (suggestion) => Padding(
-                          padding: const EdgeInsets.only(top: 2),
+                        const SizedBox(width: 12),
+                        const Expanded(
                           child: Text(
-                            suggestion,
+                            'Produit non trouvé',
                             style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Message d'erreur
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.red.withOpacity(0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Aucun produit trouvé pour ce code barres',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Code recherché: $barcode',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Suggestions:',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        ...[
+                          '• Vérifiez que le code barres est correct',
+                          '• Assurez-vous que le produit est en stock',
+                          '• Essayez une recherche manuelle dans la liste',
+                        ].map(
+                          (suggestion) => Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              suggestion,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Boutons d'action
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            side: const BorderSide(color: Colors.grey),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Fermer',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                       ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _showManualEntry(); // Réessayer avec une nouvelle saisie
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF3B82F6),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Réessayer',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 24),
-
-                // Boutons d'action
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: Colors.grey),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Fermer',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _showManualEntry(); // Réessayer avec une nouvelle saisie
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3B82F6),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Réessayer',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      );
+        );
+      }
     }
   }
 
@@ -2113,6 +2123,173 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
     );
   }
 
+  void _showClientDialog(Map<String, dynamic> product) {
+    final TextEditingController clientController = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF3B82F6), Color(0xFF1E40AF)],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.person_add,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Finaliser la vente',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Info produit
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3B82F6).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Produit: ${product['nom']}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Prix: ${product['prix_vente']} \$',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Champ client
+              TextField(
+                controller: clientController,
+                decoration: InputDecoration(
+                  labelText: 'Nom du client',
+                  hintText: 'Entrez le nom du client',
+                  prefixIcon: const Icon(Icons.person),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF3B82F6)),
+                  ),
+                ),
+                autofocus: true,
+              ),
+              const SizedBox(height: 24),
+
+              // Boutons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: const BorderSide(color: Colors.grey),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Annuler',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (clientController.text.trim().isNotEmpty) {
+                          Navigator.pop(context);
+                          _effectuerVente(
+                            product,
+                            1,
+                            clientController.text.trim(),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Veuillez entrer le nom du client'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3B82F6),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Confirmer la vente',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _effectuerVente(
     Map<String, dynamic> produit,
     int quantity,
@@ -2131,8 +2308,8 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
       }
 
       // Préparer les données pour l'API
+      // D'abord créer le client s'il n'existe pas, puis utiliser son ID
       final venteData = {
-        'client_id': 1, // ID du client par défaut (à adapter)
         'nom_client': clientName,
         'date_vente': DateTime.now().toIso8601String().split(
           'T',
@@ -2146,8 +2323,12 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
         ],
       };
 
+      print("Données envoyées à l'API: $venteData");
+
       // Appeler l'API pour enregistrer la vente
       final response = await ApiService.effectuerVente(venteData);
+
+      print("Réponse de l'API: $response");
 
       if (response['success'] == true) {
         // Succès
@@ -2180,13 +2361,19 @@ class _VentePageState extends State<VentePage> with TickerProviderStateMixin {
       } else {
         // Erreur
         if (mounted) {
+          String errorMessage =
+              '❌ Erreur lors de la vente: ${response['message'] ?? 'Erreur inconnue'}';
+
+          // Ajouter les détails de validation si disponibles
+          if (response['errors'] != null) {
+            errorMessage += '\nDétails: ${response['errors']}';
+          }
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                '❌ Erreur lors de la vente: ${response['message'] ?? 'Erreur inconnue'}',
-              ),
+              content: Text(errorMessage),
               backgroundColor: Colors.red,
-              duration: const Duration(seconds: 4),
+              duration: const Duration(seconds: 6),
             ),
           );
         }

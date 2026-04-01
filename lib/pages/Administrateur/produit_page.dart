@@ -81,9 +81,10 @@ class _ProduitPageState extends State<ProduitPage>
                   'date_vente': vente['date_vente'],
                   'reference': vente['reference'],
                   'client_nom':
-                      vente['nom_client']?.toString().isNotEmpty == true
-                      ? vente['nom_client'].toString()
-                      : vente['client']?['nom']?.toString() ?? 'Client inconnu',
+                      vente['client']?['nom_client']?.toString().isNotEmpty ==
+                          true
+                      ? vente['client']['nom_client'].toString()
+                      : 'Client inconnu',
                   'client_id': vente['client_id'],
                   'vente_id': vente['id'],
                   'detail_id': detail['id'],

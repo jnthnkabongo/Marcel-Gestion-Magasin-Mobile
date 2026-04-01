@@ -117,7 +117,7 @@ class _ParametresPagePageState extends State<ParametresPageUser> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Nom: ${_userInfo?['role'] ?? 'N/A'}',
+                          'Nom: ${_userInfo?['role']?['nom'] ?? 'N/A'}',
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.8),
                             fontSize: 14,
@@ -160,33 +160,6 @@ class _ParametresPagePageState extends State<ParametresPageUser> {
           SliverList(
             delegate: SliverChildListDelegate([
               _buildModernSettingTile(
-                'Rôles et permissions',
-                'Configurer les accès',
-                Icons.admin_panel_settings,
-                Colors.blue,
-                () {
-                  Navigator.of(
-                    context,
-                  ).push(MaterialPageRoute(builder: (context) => UsersPage()));
-                },
-              ),
-              _buildModernSettingTile(
-                'Catégories des produits ',
-                'Configurer les catégories des produits',
-                Icons.check_box,
-                Colors.blue,
-                () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                  );
-                },
-              ),
-            ]),
-          ),
-
-          SliverList(
-            delegate: SliverChildListDelegate([
-              _buildModernSettingTile(
                 'Sauvegarde',
                 'Backup et restauration',
                 Icons.backup,
@@ -204,17 +177,7 @@ class _ParametresPagePageState extends State<ParametresPageUser> {
                   // TODO: Import/Export
                 },
               ),
-              _buildModernSettingTile(
-                'Journal d\'audit',
-                'Historique des actions',
-                Icons.history,
-                Colors.blue,
-                () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const AuditPage()),
-                  );
-                },
-              ),
+             
             ]),
           ),
 
