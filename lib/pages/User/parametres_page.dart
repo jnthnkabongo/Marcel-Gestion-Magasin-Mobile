@@ -4,14 +4,14 @@ import 'package:marcelgestion/pages/Administrateur/utilisateur_page.dart';
 import 'package:marcelgestion/pages/login_new.dart';
 import 'package:marcelgestion/services/api_service.dart';
 
-class ParametresPage extends StatefulWidget {
-  const ParametresPage({super.key});
+class ParametresPageUser extends StatefulWidget {
+  const ParametresPageUser({super.key});
 
   @override
-  State<ParametresPage> createState() => _ParametresPagePageState();
+  State<ParametresPageUser> createState() => _ParametresPagePageState();
 }
 
-class _ParametresPagePageState extends State<ParametresPage> {
+class _ParametresPagePageState extends State<ParametresPageUser> {
   Map<String, dynamic>? _userInfo;
 
   @override

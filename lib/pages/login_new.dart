@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:marcelgestion/pages/Administrateur/navbar.dart';
+import 'package:marcelgestion/pages/User/navbar_page.dart';
 import 'package:marcelgestion/services/api_service.dart';
 import 'User/dashboard.dart';
 
@@ -63,7 +64,7 @@ class _LoginPageState extends State<LoginPage> {
           );
         } else if (response['roleId'] == 2) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const UserDashboard()),
+            MaterialPageRoute(builder: (context) => const MainPageUser()),
           );
         }
       } else {
@@ -125,7 +126,7 @@ class _LoginPageState extends State<LoginPage> {
           );
         } else if (response['roleId'] == 2) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const UserDashboard()),
+            MaterialPageRoute(builder: (context) => const MainPageUser()),
           );
         }
       } else {
@@ -148,7 +149,7 @@ class _LoginPageState extends State<LoginPage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF3B82F6), Color(0xFF1E40AF)],
+            colors: [Color(0xFFE0E6F0), Color(0xFFA7A9AD)],
           ),
         ),
         child: SafeArea(
