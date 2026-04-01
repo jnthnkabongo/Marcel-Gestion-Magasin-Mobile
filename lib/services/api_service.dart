@@ -1,21 +1,21 @@
 import 'dart:convert';
 import 'dart:io';
-//import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   //static const String baseUrl = 'https://baramingap.alwaysdata.net'; //Windows
-  static const String baseUrl = 'http://192.168.1.71:8000';
-  // static String get baseUrl {
-  //   if (kIsWeb) {
-  //     return 'https://baramingap.alwaysdata.net';
-  //   } else if (Platform.isAndroid) {
-  //     return 'http://10.0.2.2:8000';
-  //   } else {
-  //     return 'http://192.168.1.71:8000';
-  //   }
-  // }
+  //static const String baseUrl = 'http://192.168.1.71:8000';
+  static String get baseUrl {
+    if (kIsWeb) {
+      return 'https://baramingap.alwaysdata.net';
+    } else if (Platform.isAndroid) {
+      return 'http://10.0.2.2:8001';
+    } else {
+      return 'http://192.168.1.71:8001';
+    }
+  }
 
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'user';
@@ -385,6 +385,50 @@ class ApiService {
           'success': false,
           'message': data['message'] ?? 'Erreur lors de la vente',
           'errors': data['errors'],
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Erreur de réseau : ${e.toString()}',
+      };
+    }
+  }
+
+  //Récupérer le rapport de ventes avec bénéfices
+  static Future<Map<String, dynamic>> getRapportVentes() async {
+    try {
+      final token = await getToken();
+      if (token == null) {
+        return {'success': false, 'message': 'Token non trouvé'};
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/rapport-ventes'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': true,
+          'produitRapports': data['produitRapports'] ?? [],
+          'beneficeTotal': data['beneficeTotal'] ?? 0,
+          'totalVentes': data['totalVentes'] ?? 0,
+          'beneficeMoyen': data['beneficeMoyen'] ?? 0,
+          'meilleurProduit': data['meilleurProduit'],
+          'message': data['message'],
+        };
+      } else {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message':
+              data['message'] ?? 'Erreur lors de la récupération du rapport',
         };
       }
     } catch (e) {
